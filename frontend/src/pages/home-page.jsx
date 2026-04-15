@@ -42,28 +42,32 @@ export function HomePage() {
             </ButtonLink>
           </div>
         </div>
+
         <div className="hero-preview">
           <div className="preview-card">
-            <span className="preview-pill">Today</span>
-            <strong>Default availability</strong>
-            <p>Mon to Fri, 09:00 to 17:00</p>
+            <strong>Deterministic slot generation</strong>
+            <p>
+              Slots are computed from weekly availability rules, filtered against existing bookings,
+              and stored in UTC to ensure consistent cross-timezone scheduling.
+            </p>
           </div>
+
           <div className="preview-grid">
             <div className="preview-metric">
-              <span>2</span>
-              <small>Live event types</small>
+              <span>Weekly</span>
+              <small>Availability rules</small>
             </div>
             <div className="preview-metric">
               <span>UTC</span>
-              <small>Bookings stored safely</small>
+              <small>Time storage standard</small>
             </div>
             <div className="preview-metric">
-              <span>0</span>
-              <small>Overlap tolerance</small>
+              <span>Strict</span>
+              <small>No overlapping bookings</small>
             </div>
             <div className="preview-metric">
-              <span>1</span>
-              <small>Admin owner</small>
+              <span>Single</span>
+              <small>Admin workflow</small>
             </div>
           </div>
         </div>
