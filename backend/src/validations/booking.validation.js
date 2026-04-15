@@ -31,6 +31,11 @@ const publicSlotsQuerySchema = z.object({
   date: dateSchema,
 });
 
+const bookingAnswerSchema = z.object({
+  questionId: z.coerce.number().int().positive(),
+  value: z.string().trim().max(2000),
+});
+
 const createPublicBookingSchema = z.object({
   username: usernameSchema,
   slug: slugSchema,
@@ -39,6 +44,7 @@ const createPublicBookingSchema = z.object({
   attendeeName: z.string().trim().min(1).max(120),
   attendeeEmail: z.string().trim().email(),
   attendeeTimezone: timeZoneSchema.optional(),
+  answers: z.array(bookingAnswerSchema).max(8).default([]),
 });
 
 module.exports = {

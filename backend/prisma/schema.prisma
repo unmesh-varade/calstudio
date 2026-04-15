@@ -11,6 +11,11 @@ enum BookingStatus {
   cancelled
 }
 
+enum BookingQuestionType {
+  shortText
+  longText
+}
+
 model User {
   id              Int                    @id @default(autoincrement())
   username        String                 @unique
@@ -71,10 +76,28 @@ model EventType {
   user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   schedule        AvailabilitySchedule @relation(fields: [scheduleId], references: [id], onDelete: Restrict)
   bookings        Booking[]
+  questions       EventTypeQuestion[]
 
   @@index([userId])
   @@index([scheduleId])
   @@map("event_types")
+}
+
+model EventTypeQuestion {
+  id          Int                 @id @default(autoincrement())
+  eventTypeId Int                 @map("event_type_id")
+  label       String
+  type        BookingQuestionType
+  placeholder String?
+  isRequired  Boolean             @default(false) @map("is_required")
+  sortOrder   Int                 @default(0) @map("sort_order")
+  createdAt   DateTime            @default(now()) @map("created_at")
+  updatedAt   DateTime            @updatedAt @map("updated_at")
+  eventType   EventType           @relation(fields: [eventTypeId], references: [id], onDelete: Cascade)
+  answers     BookingAnswer[]
+
+  @@index([eventTypeId, sortOrder])
+  @@map("event_type_questions")
 }
 
 model Booking {
@@ -92,9 +115,27 @@ model Booking {
   updatedAt        DateTime      @updatedAt @map("updated_at")
   user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   eventType        EventType     @relation(fields: [eventTypeId], references: [id], onDelete: Restrict)
+  answers          BookingAnswer[]
 
   @@index([userId, status, startTimeUtc])
   @@index([userId, status, endTimeUtc])
   @@index([eventTypeId])
   @@map("bookings")
+}
+
+model BookingAnswer {
+  id           Int                 @id @default(autoincrement())
+  bookingId    Int                 @map("booking_id")
+  questionId   Int?                @map("question_id")
+  questionLabel String             @map("question_label")
+  questionType BookingQuestionType @map("question_type")
+  value        String
+  createdAt    DateTime            @default(now()) @map("created_at")
+  updatedAt    DateTime            @updatedAt @map("updated_at")
+  booking      Booking             @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  question     EventTypeQuestion?  @relation(fields: [questionId], references: [id], onDelete: SetNull)
+
+  @@index([bookingId])
+  @@index([questionId])
+  @@map("booking_answers")
 }

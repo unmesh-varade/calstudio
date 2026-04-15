@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { addDays, format, startOfToday } from 'date-fns'
 import { ChevronLeft, ChevronRight, Clock3, Globe2, UserRound } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { DayPicker } from 'react-day-picker'
 import { useNavigate, useParams } from 'react-router-dom'
 import { QueryState } from '../components/query-state'
@@ -17,6 +17,14 @@ const defaultForm = {
   attendeeName: '',
   attendeeEmail: '',
   attendeeTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Kolkata',
+  answers: {},
+}
+
+function buildAnswerState(questions = []) {
+  return questions.reduce((accumulator, question) => {
+    accumulator[question.id] = ''
+    return accumulator
+  }, {})
 }
 
 export function PublicBookingPage() {
@@ -27,10 +35,7 @@ export function PublicBookingPage() {
   const [selectedSlot, setSelectedSlot] = useState(null)
   const [formValues, setFormValues] = useState(defaultForm)
 
-  const selectedDateString = useMemo(
-    () => format(selectedDate, 'yyyy-MM-dd'),
-    [selectedDate],
-  )
+  const selectedDateString = useMemo(() => format(selectedDate, 'yyyy-MM-dd'), [selectedDate])
 
   const eventTypeQuery = useQuery({
     queryKey: ['public-event-type', username, slug],
@@ -51,6 +56,13 @@ export function PublicBookingPage() {
     },
   })
 
+  useEffect(() => {
+    setFormValues((current) => ({
+      ...current,
+      answers: buildAnswerState(eventTypeQuery.data?.questions),
+    }))
+  }, [eventTypeQuery.data?.questions])
+
   const bookingMutationError = bookingMutation.error?.message
 
   function handleFormSubmit(event) {
@@ -68,7 +80,21 @@ export function PublicBookingPage() {
       attendeeName: formValues.attendeeName.trim(),
       attendeeEmail: formValues.attendeeEmail.trim(),
       attendeeTimezone: formValues.attendeeTimezone.trim(),
+      answers: (eventTypeQuery.data?.questions || []).map((question) => ({
+        questionId: question.id,
+        value: formValues.answers[question.id]?.trim() || '',
+      })),
     })
+  }
+
+  function updateAnswer(questionId, value) {
+    setFormValues((current) => ({
+      ...current,
+      answers: {
+        ...current.answers,
+        [questionId]: value,
+      },
+    }))
   }
 
   return (
@@ -107,10 +133,7 @@ export function PublicBookingPage() {
             <div className="booking-selection">
               <strong>Selected</strong>
               <span>
-                {formatDateTime(
-                  selectedSlot.startTimeUtc,
-                  eventTypeQuery.data?.timezone || 'UTC',
-                )}
+                {formatDateTime(selectedSlot.startTimeUtc, eventTypeQuery.data?.timezone || 'UTC')}
               </span>
             </div>
           ) : null}
@@ -127,11 +150,7 @@ export function PublicBookingPage() {
             className="booking-calendar"
             components={{
               Chevron: ({ orientation, ...props }) =>
-                orientation === 'left' ? (
-                  <ChevronLeft {...props} size={16} />
-                ) : (
-                  <ChevronRight {...props} size={16} />
-                ),
+                orientation === 'left' ? <ChevronLeft {...props} size={16} /> : <ChevronRight {...props} size={16} />,
             }}
             disabled={{ before: addDays(startOfToday(), 1) }}
             mode="single"
@@ -241,6 +260,53 @@ export function PublicBookingPage() {
                 ))}
               </select>
             </label>
+
+            {eventTypeQuery.data?.questions?.length ? (
+              <section className="booking-question-list">
+                <div className="section-heading section-heading--compact">
+                  <div>
+                    <span className="field__label">Additional booking questions</span>
+                    <p className="section-heading__copy">
+                      Share a little context so the host can prepare before the meeting.
+                    </p>
+                  </div>
+                </div>
+
+                {eventTypeQuery.data.questions.map((question) =>
+                  question.type === 'longText' ? (
+                    <label className="field" key={question.id}>
+                      <span className="field__label">
+                        {question.label}
+                        {question.isRequired ? ' *' : ''}
+                      </span>
+                      <textarea
+                        className="field__control field__control--textarea"
+                        onChange={(event) => updateAnswer(question.id, event.target.value)}
+                        placeholder={question.placeholder || 'Type your answer'}
+                        required={question.isRequired}
+                        rows={5}
+                        value={formValues.answers[question.id] || ''}
+                      />
+                    </label>
+                  ) : (
+                    <label className="field" key={question.id}>
+                      <span className="field__label">
+                        {question.label}
+                        {question.isRequired ? ' *' : ''}
+                      </span>
+                      <input
+                        className="field__control"
+                        onChange={(event) => updateAnswer(question.id, event.target.value)}
+                        placeholder={question.placeholder || 'Type your answer'}
+                        required={question.isRequired}
+                        type="text"
+                        value={formValues.answers[question.id] || ''}
+                      />
+                    </label>
+                  ),
+                )}
+              </section>
+            ) : null}
 
             {bookingMutationError ? (
               <div className="form-message form-message--error">{bookingMutationError}</div>

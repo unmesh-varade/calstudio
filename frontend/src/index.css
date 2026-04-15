@@ -955,8 +955,52 @@ h3 {
   flex-wrap: wrap;
 }
 
+.booking-list {
+  display: grid;
+  gap: 20px;
+}
+
 .booking-card {
   gap: 18px;
+}
+
+.booking-card--split {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 24px;
+}
+
+.booking-card__main,
+.booking-card__identity,
+.booking-card__answers {
+  display: grid;
+  gap: 14px;
+}
+
+.booking-card__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.booking-card__title-row {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.booking-card__meta {
+  gap: 10px;
+}
+
+.booking-card__actions {
+  width: 170px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.booking-card__action-button {
+  width: 100%;
+  align-self: start;
 }
 
 .booking-card__footer {
@@ -1061,6 +1105,62 @@ h3 {
   align-items: flex-start;
 }
 
+.section-heading,
+.question-card__header,
+.confirmation-notes__item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.section-heading {
+  flex-wrap: wrap;
+}
+
+.section-heading__copy {
+  margin-top: 4px;
+  font-size: 0.94rem;
+}
+
+.section-heading--compact {
+  margin-bottom: 4px;
+}
+
+.question-editor,
+.question-editor__list,
+.booking-question-list,
+.confirmation-notes,
+.confirmation-notes__list {
+  display: grid;
+  gap: 16px;
+}
+
+.question-card,
+.confirmation-notes__item {
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: rgba(248, 250, 252, 0.72);
+  padding: 16px;
+}
+
+.question-card__header {
+  align-items: center;
+}
+
+.question-editor__empty {
+  padding: 18px;
+}
+
+.confirmation-notes__item {
+  display: grid;
+  justify-content: stretch;
+}
+
+.confirmation-notes__item span {
+  color: var(--text-muted);
+}
+
 .availability-days {
   display: grid;
   gap: 14px;
@@ -1105,6 +1205,19 @@ h3 {
 
   .booking-summary {
     position: static;
+  }
+
+  .booking-card--split {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-card__actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .booking-card__action-button {
+    width: auto;
   }
 }
 

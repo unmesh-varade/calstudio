@@ -6,6 +6,19 @@ const booleanSchema = z
   .union([z.boolean(), z.enum(['true', 'false'])])
   .transform((value) => value === true || value === 'true');
 
+const questionSchema = z.object({
+  id: z.coerce.number().int().positive().optional(),
+  label: z.string().trim().min(1).max(160),
+  type: z.enum(['shortText', 'longText']).default('shortText'),
+  placeholder: z
+    .string()
+    .trim()
+    .max(280)
+    .optional()
+    .transform((value) => value || undefined),
+  isRequired: booleanSchema.default(false),
+});
+
 const eventTypeBodySchema = z.object({
   title: z.string().trim().min(1).max(120),
   description: z.string().trim().min(1).max(500),
@@ -14,6 +27,7 @@ const eventTypeBodySchema = z.object({
   slug: slugSchema,
   scheduleId: z.coerce.number().int().positive().optional(),
   isActive: booleanSchema.optional(),
+  questions: z.array(questionSchema).max(8).default([]),
 });
 
 const createEventTypeSchema = eventTypeBodySchema;

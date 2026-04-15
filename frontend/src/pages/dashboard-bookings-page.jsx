@@ -81,49 +81,68 @@ export function DashboardBookingsPage() {
         error={bookingsQuery.error}
         empty={!bookingsQuery.data?.length && emptyText}
       >
-        <div className="list-grid">
+        <div className="booking-list">
           {bookingsQuery.data?.map((booking) => (
-            <article className="list-card booking-card" key={booking.id}>
-              <div className="list-card__header">
-                <div>
-                  <div className="card-title-row">
-                    <h3>{booking.attendeeName}</h3>
-                    <span
-                      className={
-                        booking.status === 'scheduled'
-                          ? 'status-pill status-pill--success'
-                          : 'status-pill'
-                      }
-                    >
-                      {booking.status}
-                    </span>
+            <article className="list-card booking-card booking-card--split" key={booking.id}>
+              <div className="booking-card__main">
+                <div className="booking-card__header">
+                  <div className="booking-card__identity">
+                    <div className="card-title-row booking-card__title-row">
+                      <h3>{booking.attendeeName}</h3>
+                      <span
+                        className={
+                          booking.status === 'scheduled'
+                            ? 'status-pill status-pill--success'
+                            : 'status-pill'
+                        }
+                      >
+                        {booking.status}
+                      </span>
+                    </div>
+                    <p>{booking.attendeeEmail}</p>
                   </div>
-                  <p>{booking.attendeeEmail}</p>
                 </div>
-                {view === 'upcoming' ? (
+
+                <div className="meta-column booking-card__meta">
+                  <span>{booking.eventType.title}</span>
+                  <span>
+                    {formatDateTime(booking.startTimeUtc, booking.eventType.timezone || 'UTC')}
+                  </span>
+                  <span>{booking.attendeeTimezone || 'Timezone not shared'}</span>
+                </div>
+
+                {booking.answers?.length ? (
+                  <div className="confirmation-notes booking-card__answers">
+                    <h3>Booking answers</h3>
+                    <div className="confirmation-notes__list">
+                      {booking.answers.map((answer) => (
+                        <div className="confirmation-notes__item" key={answer.id}>
+                          <span>{answer.questionLabel}</span>
+                          <strong>{answer.value}</strong>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="booking-card__footer">
+                  <span>Event slug: {booking.eventType.slug}</span>
+                  <span>Booking #{booking.id}</span>
+                </div>
+              </div>
+
+              {view === 'upcoming' ? (
+                <div className="booking-card__actions">
                   <button
-                    className="button button--ghost button--danger"
+                    className="button button--ghost button--danger booking-card__action-button"
                     disabled={pendingCancelId === booking.id}
                     onClick={() => handleCancel(booking)}
                     type="button"
                   >
                     {pendingCancelId === booking.id ? 'Updating...' : 'Cancel booking'}
                   </button>
-                ) : null}
-              </div>
-
-              <div className="meta-column">
-                <span>{booking.eventType.title}</span>
-                <span>
-                  {formatDateTime(booking.startTimeUtc, booking.eventType.timezone || 'UTC')}
-                </span>
-                <span>{booking.attendeeTimezone || 'Timezone not shared'}</span>
-              </div>
-
-              <div className="booking-card__footer">
-                <span>Event slug: {booking.eventType.slug}</span>
-                <span>Booking #{booking.id}</span>
-              </div>
+                </div>
+              ) : null}
             </article>
           ))}
         </div>

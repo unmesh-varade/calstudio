@@ -12,7 +12,9 @@ const prisma = new PrismaClient({
 });
 
 async function main() {
+  await prisma.bookingAnswer.deleteMany();
   await prisma.booking.deleteMany();
+  await prisma.eventTypeQuestion.deleteMany();
   await prisma.eventType.deleteMany();
   await prisma.availabilityRule.deleteMany();
   await prisma.availabilitySchedule.deleteMany();

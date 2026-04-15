@@ -58,6 +58,7 @@ export function DashboardEventTypesPage() {
                 <div className="event-type-row__meta">
                   <span className="event-type-badge">{eventType.durationMinutes}m</span>
                   <span>{eventType.bufferMinutes}m buffer</span>
+                  <span>{eventType.questions?.length || 0} questions</span>
                   <span>{eventType.schedule?.timezone}</span>
                   <span>{eventType.bookingCount} bookings</span>
                 </div>

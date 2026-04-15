@@ -22,7 +22,7 @@ export function DashboardNewEventTypePage() {
         <div>
           <p className="eyebrow">Admin setup</p>
           <h2>Create event type</h2>
-          <p>Define the public link, meeting length, and description guests will see.</p>
+          <p>Define the public link, meeting length, and any custom booking questions guests should answer.</p>
         </div>
         <ButtonLink to="/dashboard/event-types" variant="ghost">
           Back to list

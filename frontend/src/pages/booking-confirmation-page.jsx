@@ -73,6 +73,20 @@ export function BookingConfirmationPage() {
             </strong>
           </div>
 
+          {bookingQuery.data?.answers?.length ? (
+            <div className="confirmation-notes">
+              <h3>Booking notes</h3>
+              <div className="confirmation-notes__list">
+                {bookingQuery.data.answers.map((answer) => (
+                  <div className="confirmation-notes__item" key={answer.id}>
+                    <span>{answer.questionLabel}</span>
+                    <strong>{answer.value}</strong>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
           <div className="confirmation-actions">
             <Link className="button button--ghost" to={`/${bookingQuery.data?.organizerUsername || ''}`}>
               Back to public page

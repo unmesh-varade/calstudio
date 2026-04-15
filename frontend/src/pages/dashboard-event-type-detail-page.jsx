@@ -55,7 +55,7 @@ export function DashboardEventTypeDetailPage() {
         <div>
           <p className="eyebrow">Event type detail</p>
           <h2>{eventType?.title || 'Loading event type'}</h2>
-          <p>Update the shareable slug, duration, and booking status from one form.</p>
+          <p>Update the shareable slug, timing, custom questions, and booking status from one form.</p>
         </div>
         <ButtonLink to="/dashboard/event-types" variant="ghost">
           Back to list
@@ -83,6 +83,10 @@ export function DashboardEventTypeDetailPage() {
           <div className="detail-row">
             <span>Timezone</span>
             <strong>{eventType?.schedule?.timezone}</strong>
+          </div>
+          <div className="detail-row">
+            <span>Custom questions</span>
+            <strong>{eventType?.questions?.length || 0}</strong>
           </div>
         </div>
 

@@ -18,6 +18,14 @@ function serializeEventType(eventType) {
     createdAt: eventType.createdAt,
     updatedAt: eventType.updatedAt,
     bookingCount: eventType._count?.bookings ?? 0,
+    questions: (eventType.questions || []).map((question) => ({
+      id: question.id,
+      label: question.label,
+      type: question.type,
+      placeholder: question.placeholder,
+      isRequired: question.isRequired,
+      sortOrder: question.sortOrder,
+    })),
     schedule: eventType.schedule
       ? {
           id: eventType.schedule.id,
@@ -27,6 +35,16 @@ function serializeEventType(eventType) {
       : null,
     organizerUsername: eventType.user?.username ?? null,
   };
+}
+
+function buildQuestionData(questions = []) {
+  return questions.map((question, index) => ({
+    label: question.label,
+    type: question.type,
+    placeholder: question.placeholder ?? null,
+    isRequired: question.isRequired ?? false,
+    sortOrder: index,
+  }));
 }
 
 async function listEventTypes() {
@@ -46,6 +64,11 @@ async function listEventTypes() {
           id: true,
           name: true,
           timezone: true,
+        },
+      },
+      questions: {
+        orderBy: {
+          sortOrder: 'asc',
         },
       },
       _count: {
@@ -77,6 +100,9 @@ async function createEventType(payload) {
       durationMinutes: payload.durationMinutes,
       bufferMinutes: payload.bufferMinutes ?? 0,
       isActive: payload.isActive ?? true,
+      questions: {
+        create: buildQuestionData(payload.questions),
+      },
     },
     include: {
       user: {
@@ -89,6 +115,11 @@ async function createEventType(payload) {
           id: true,
           name: true,
           timezone: true,
+        },
+      },
+      questions: {
+        orderBy: {
+          sortOrder: 'asc',
         },
       },
       _count: {
@@ -122,38 +153,64 @@ async function updateEventType(id, payload) {
     scheduleId = schedule.id;
   }
 
-  const eventType = await prisma.eventType.update({
-    where: {
-      id,
-    },
-    data: {
-      title: payload.title ?? existing.title,
-      description: payload.description ?? existing.description,
-      slug: payload.slug ?? existing.slug,
-      durationMinutes: payload.durationMinutes ?? existing.durationMinutes,
-      bufferMinutes: payload.bufferMinutes ?? existing.bufferMinutes,
-      isActive: payload.isActive ?? existing.isActive,
-      scheduleId,
-    },
-    include: {
-      user: {
-        select: {
-          username: true,
+  const eventType = await prisma.$transaction(async (tx) => {
+    if (payload.questions) {
+      await tx.eventTypeQuestion.deleteMany({
+        where: {
+          eventTypeId: id,
+        },
+      });
+    }
+
+    await tx.eventType.update({
+      where: {
+        id,
+      },
+      data: {
+        title: payload.title ?? existing.title,
+        description: payload.description ?? existing.description,
+        slug: payload.slug ?? existing.slug,
+        durationMinutes: payload.durationMinutes ?? existing.durationMinutes,
+        bufferMinutes: payload.bufferMinutes ?? existing.bufferMinutes,
+        isActive: payload.isActive ?? existing.isActive,
+        scheduleId,
+        questions: payload.questions
+          ? {
+              create: buildQuestionData(payload.questions),
+            }
+          : undefined,
+      },
+    });
+
+    return tx.eventType.findUnique({
+      where: {
+        id,
+      },
+      include: {
+        user: {
+          select: {
+            username: true,
+          },
+        },
+        schedule: {
+          select: {
+            id: true,
+            name: true,
+            timezone: true,
+          },
+        },
+        questions: {
+          orderBy: {
+            sortOrder: 'asc',
+          },
+        },
+        _count: {
+          select: {
+            bookings: true,
+          },
         },
       },
-      schedule: {
-        select: {
-          id: true,
-          name: true,
-          timezone: true,
-        },
-      },
-      _count: {
-        select: {
-          bookings: true,
-        },
-      },
-    },
+    });
   });
 
   return serializeEventType(eventType);

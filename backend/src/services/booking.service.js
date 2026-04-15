@@ -12,8 +12,17 @@ const {
   zonedLocalTimeToUtc,
 } = require('../utils/time');
 const { getAdminUserOrThrow } = require('./admin.service');
+const {
+  sendBookingCancelledEmails,
+  sendBookingCreatedEmails,
+} = require('./email.service');
 
 const bookingInclude = {
+  answers: {
+    orderBy: {
+      createdAt: 'asc',
+    },
+  },
   eventType: {
     include: {
       user: true,
@@ -36,6 +45,14 @@ function serializeEventTypeForPublic(eventType) {
       name: eventType.user.name,
       email: eventType.user.email,
     },
+    questions: (eventType.questions || []).map((question) => ({
+      id: question.id,
+      label: question.label,
+      type: question.type,
+      placeholder: question.placeholder,
+      isRequired: question.isRequired,
+      sortOrder: question.sortOrder,
+    })),
   };
 }
 
@@ -78,7 +95,18 @@ function serializeBooking(booking) {
       durationMinutes: booking.eventType.durationMinutes,
       bufferMinutes: booking.eventType.bufferMinutes,
       timezone: scheduleTimeZone,
+      organizer: {
+        name: booking.eventType.user.name,
+        email: booking.eventType.user.email,
+      },
     },
+    answers: (booking.answers || []).map((answer) => ({
+      id: answer.id,
+      questionId: answer.questionId,
+      questionLabel: answer.questionLabel,
+      questionType: answer.questionType,
+      value: answer.value,
+    })),
     organizerUsername: booking.eventType.user.username,
   };
 }
@@ -98,6 +126,11 @@ async function getActiveEventTypeBySlugOrThrow(slug) {
               weekday: 'asc',
             },
           },
+        },
+      },
+      questions: {
+        orderBy: {
+          sortOrder: 'asc',
         },
       },
     },
@@ -128,6 +161,11 @@ async function getActiveEventTypeByUsernameAndSlugOrThrow(username, slug) {
               weekday: 'asc',
             },
           },
+        },
+      },
+      questions: {
+        orderBy: {
+          sortOrder: 'asc',
         },
       },
     },
@@ -291,9 +329,35 @@ function buildBookingWindow(eventType, dateString, timeString) {
   };
 }
 
+function normalizeBookingAnswers(eventType, submittedAnswers = []) {
+  const submittedByQuestionId = new Map(
+    submittedAnswers.map((answer) => [answer.questionId, answer.value.trim()]),
+  );
+
+  return eventType.questions.map((question) => {
+    const value = submittedByQuestionId.get(question.id) || '';
+
+    if (question.isRequired && !value) {
+      throw createHttpError(400, `Please answer "${question.label}".`);
+    }
+
+    if (value.length > 2000) {
+      throw createHttpError(400, `"${question.label}" is too long.`);
+    }
+
+    return {
+      questionId: question.id,
+      questionLabel: question.label,
+      questionType: question.type,
+      value,
+    };
+  });
+}
+
 async function createPublicBooking(payload) {
   const eventType = await getActiveEventTypeByUsernameAndSlugOrThrow(payload.username, payload.slug);
   const bookingWindow = buildBookingWindow(eventType, payload.date, payload.time);
+  const normalizedAnswers = normalizeBookingAnswers(eventType, payload.answers);
 
   const booking = await prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(${eventType.userId})`;
@@ -336,12 +400,24 @@ async function createPublicBooking(payload) {
         startTimeUtc: bookingWindow.startTimeUtc,
         endTimeUtc: bookingWindow.endTimeUtc,
         status: 'scheduled',
+        answers: {
+          create: normalizedAnswers
+            .filter((answer) => answer.value)
+            .map((answer) => ({
+              questionId: answer.questionId,
+              questionLabel: answer.questionLabel,
+              questionType: answer.questionType,
+              value: answer.value,
+            })),
+        },
       },
       include: bookingInclude,
     });
   });
 
-  return serializeBooking(booking);
+  const serializedBooking = serializeBooking(booking);
+  void sendBookingCreatedEmails(serializedBooking);
+  return serializedBooking;
 }
 
 async function getPublicBookingConfirmation(bookingId, attendeeEmail) {
@@ -428,7 +504,9 @@ async function cancelBooking(id) {
     include: bookingInclude,
   });
 
-  return serializeBooking(booking);
+  const serializedBooking = serializeBooking(booking);
+  void sendBookingCancelledEmails(serializedBooking);
+  return serializedBooking;
 }
 
 module.exports = {

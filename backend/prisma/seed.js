@@ -57,7 +57,9 @@ function buildBooking({
 }
 
 async function main() {
+  await prisma.bookingAnswer.deleteMany();
   await prisma.booking.deleteMany();
+  await prisma.eventTypeQuestion.deleteMany();
   await prisma.eventType.deleteMany();
   await prisma.availabilityRule.deleteMany();
   await prisma.availabilitySchedule.deleteMany();
@@ -101,6 +103,24 @@ async function main() {
       durationMinutes: 30,
       bufferMinutes: 15,
       isActive: true,
+      questions: {
+        create: [
+          {
+            label: 'Additional notes',
+            type: 'longText',
+            placeholder: 'Please share anything that will help prepare for our meeting.',
+            isRequired: false,
+            sortOrder: 1,
+          },
+        ],
+      },
+    },
+    include: {
+      questions: {
+        orderBy: {
+          sortOrder: 'asc',
+        },
+      },
     },
   });
 
@@ -127,9 +147,11 @@ async function main() {
   const introCallWithSchedule = { ...introCall, schedule };
   const projectReviewWithSchedule = { ...projectReview, schedule };
 
-  await prisma.booking.createMany({
-    data: [
-      buildBooking({
+  const [focusQuestion, notesQuestion] = introCall.questions;
+
+  await prisma.booking.create({
+    data: {
+      ...buildBooking({
         userId: user.id,
         eventType: introCallWithSchedule,
         dateString: nextTuesday,
@@ -138,16 +160,40 @@ async function main() {
         attendeeEmail: 'priya@example.com',
         attendeeTimezone: 'Asia/Kolkata',
       }),
-      buildBooking({
-        userId: user.id,
-        eventType: projectReviewWithSchedule,
-        dateString: nextWednesday,
-        time: '14:00',
-        attendeeName: 'Sam Carter',
-        attendeeEmail: 'sam@example.com',
-        attendeeTimezone: 'Europe/London',
-      }),
-      buildBooking({
+      answers: {
+        create: [
+          {
+            questionId: focusQuestion.id,
+            questionLabel: focusQuestion.label,
+            questionType: focusQuestion.type,
+            value: 'Planning the next quarter launch and the messaging around it.',
+          },
+          {
+            questionId: notesQuestion.id,
+            questionLabel: notesQuestion.label,
+            questionType: notesQuestion.type,
+            value: 'I would love feedback on positioning for both enterprise and startup buyers.',
+          },
+        ],
+      },
+    },
+  });
+
+  await prisma.booking.create({
+    data: buildBooking({
+      userId: user.id,
+      eventType: projectReviewWithSchedule,
+      dateString: nextWednesday,
+      time: '14:00',
+      attendeeName: 'Sam Carter',
+      attendeeEmail: 'sam@example.com',
+      attendeeTimezone: 'Europe/London',
+    }),
+  });
+
+  await prisma.booking.create({
+    data: {
+      ...buildBooking({
         userId: user.id,
         eventType: introCallWithSchedule,
         dateString: previousMonday,
@@ -156,16 +202,34 @@ async function main() {
         attendeeEmail: 'mina@example.com',
         attendeeTimezone: 'Asia/Dubai',
       }),
-      buildBooking({
-        userId: user.id,
-        eventType: projectReviewWithSchedule,
-        dateString: previousThursday,
-        time: '15:00',
-        attendeeName: 'David Miller',
-        attendeeEmail: 'david@example.com',
-        attendeeTimezone: 'America/New_York',
-      }),
-      buildBooking({
+      answers: {
+        create: [
+          {
+            questionId: focusQuestion.id,
+            questionLabel: focusQuestion.label,
+            questionType: focusQuestion.type,
+            value: 'Reviewing hiring priorities and whether product design should be the next role.',
+          },
+        ],
+      },
+    },
+  });
+
+  await prisma.booking.create({
+    data: buildBooking({
+      userId: user.id,
+      eventType: projectReviewWithSchedule,
+      dateString: previousThursday,
+      time: '15:00',
+      attendeeName: 'David Miller',
+      attendeeEmail: 'david@example.com',
+      attendeeTimezone: 'America/New_York',
+    }),
+  });
+
+  await prisma.booking.create({
+    data: {
+      ...buildBooking({
         userId: user.id,
         eventType: introCallWithSchedule,
         dateString: nextFriday,
@@ -175,7 +239,23 @@ async function main() {
         attendeeTimezone: 'Asia/Kolkata',
         status: 'cancelled',
       }),
-    ],
+      answers: {
+        create: [
+          {
+            questionId: focusQuestion.id,
+            questionLabel: focusQuestion.label,
+            questionType: focusQuestion.type,
+            value: 'Discussing roadmap tradeoffs before our internal planning sync.',
+          },
+          {
+            questionId: notesQuestion.id,
+            questionLabel: notesQuestion.label,
+            questionType: notesQuestion.type,
+            value: 'This was cancelled after a stakeholder conflict, but keeping it for dashboard history.',
+          },
+        ],
+      },
+    },
   });
 
   console.log('Seeded default admin, availability, event types, and sample bookings.');
