@@ -143,26 +143,6 @@ The `Booking` model also stores rescheduling/self-service management fields:
 
 ---
 
-## Project Structure
-
-```txt
-backend/
-  prisma/
-  src/
-    controllers/
-    routes/
-    services/
-    utils/
-
-frontend/
-  src/
-    components/
-    features/
-    pages/
-```
-
----
-
 ## API Overview
 
 ### Admin Routes
