@@ -47,3 +47,20 @@ test('generateAvailableSlots skips booked and already-started slots', () => {
     ['09:00', '10:00'],
   );
 });
+
+test('generateAvailableSlots respects buffer minutes between meetings', () => {
+  const slots = generateAvailableSlots({
+    dateString: '2026-04-20',
+    timeZone: 'Asia/Kolkata',
+    startTime: '09:00',
+    endTime: '11:00',
+    durationMinutes: 30,
+    bufferMinutes: 15,
+    now: new Date('2026-04-18T00:00:00.000Z'),
+  });
+
+  assert.deepEqual(
+    slots.map((slot) => slot.time),
+    ['09:00', '09:45'],
+  );
+});

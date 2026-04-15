@@ -13,6 +13,7 @@ function serializeEventType(eventType) {
     slug: eventType.slug,
     description: eventType.description,
     durationMinutes: eventType.durationMinutes,
+    bufferMinutes: eventType.bufferMinutes,
     isActive: eventType.isActive,
     createdAt: eventType.createdAt,
     updatedAt: eventType.updatedAt,
@@ -74,6 +75,7 @@ async function createEventType(payload) {
       description: payload.description,
       slug: payload.slug,
       durationMinutes: payload.durationMinutes,
+      bufferMinutes: payload.bufferMinutes ?? 0,
       isActive: payload.isActive ?? true,
     },
     include: {
@@ -129,6 +131,7 @@ async function updateEventType(id, payload) {
       description: payload.description ?? existing.description,
       slug: payload.slug ?? existing.slug,
       durationMinutes: payload.durationMinutes ?? existing.durationMinutes,
+      bufferMinutes: payload.bufferMinutes ?? existing.bufferMinutes,
       isActive: payload.isActive ?? existing.isActive,
       scheduleId,
     },

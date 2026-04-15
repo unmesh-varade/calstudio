@@ -99,6 +99,7 @@ async function main() {
       slug: 'intro-call',
       description: 'A quick intro call to understand goals and next steps.',
       durationMinutes: 30,
+      bufferMinutes: 15,
       isActive: true,
     },
   });
@@ -111,6 +112,7 @@ async function main() {
       slug: 'project-review',
       description: 'A focused working session for reviewing progress and blockers.',
       durationMinutes: 45,
+      bufferMinutes: 0,
       isActive: true,
     },
   });

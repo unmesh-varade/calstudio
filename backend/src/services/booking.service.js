@@ -29,6 +29,7 @@ function serializeEventTypeForPublic(eventType) {
     slug: eventType.slug,
     description: eventType.description,
     durationMinutes: eventType.durationMinutes,
+    bufferMinutes: eventType.bufferMinutes,
     timezone: eventType.schedule.timezone,
     organizer: {
       username: eventType.user.username,
@@ -75,6 +76,7 @@ function serializeBooking(booking) {
       title: booking.eventType.title,
       slug: booking.eventType.slug,
       durationMinutes: booking.eventType.durationMinutes,
+      bufferMinutes: booking.eventType.bufferMinutes,
       timezone: scheduleTimeZone,
     },
     organizerUsername: booking.eventType.user.username,
@@ -216,6 +218,11 @@ async function getAvailableSlots(username, slug, dateString) {
     select: {
       startTimeUtc: true,
       endTimeUtc: true,
+      eventType: {
+        select: {
+          bufferMinutes: true,
+        },
+      },
     },
   });
 
@@ -225,9 +232,10 @@ async function getAvailableSlots(username, slug, dateString) {
     startTime: rule.startTime,
     endTime: rule.endTime,
     durationMinutes: eventType.durationMinutes,
+    bufferMinutes: eventType.bufferMinutes,
     bookedRanges: scheduledBookings.map((booking) => ({
       start: booking.startTimeUtc,
-      end: booking.endTimeUtc,
+      end: addMinutes(booking.endTimeUtc, booking.eventType.bufferMinutes),
     })),
   });
 
@@ -254,11 +262,12 @@ function buildBookingWindow(eventType, dateString, timeString) {
   const slotStartMinutes = timeStringToMinutes(timeString);
   const windowStartMinutes = timeStringToMinutes(rule.startTime);
   const windowEndMinutes = timeStringToMinutes(rule.endTime);
+  const occupiedMinutes = eventType.durationMinutes + eventType.bufferMinutes;
 
   if (
     !isSlotWithinWindow(
       slotStartMinutes,
-      eventType.durationMinutes,
+      occupiedMinutes,
       windowStartMinutes,
       windowEndMinutes,
     )
@@ -266,7 +275,7 @@ function buildBookingWindow(eventType, dateString, timeString) {
     throw createHttpError(400, 'The selected slot falls outside the availability window.');
   }
 
-  if (!isSlotAligned(slotStartMinutes, windowStartMinutes, eventType.durationMinutes)) {
+  if (!isSlotAligned(slotStartMinutes, windowStartMinutes, occupiedMinutes)) {
     throw createHttpError(400, 'The selected slot does not align with the event duration.');
   }
 
@@ -289,21 +298,29 @@ async function createPublicBooking(payload) {
   const booking = await prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(${eventType.userId})`;
 
-    const conflictingBooking = await tx.booking.findFirst({
+    const conflictingBookings = await tx.booking.findMany({
       where: {
         userId: eventType.userId,
         status: 'scheduled',
-        startTimeUtc: {
-          lt: bookingWindow.endTimeUtc,
-        },
         endTimeUtc: {
           gt: bookingWindow.startTimeUtc,
         },
       },
-      select: {
-        id: true,
+      include: {
+        eventType: {
+          select: {
+            bufferMinutes: true,
+          },
+        },
       },
     });
+
+    const newOccupiedEnd = addMinutes(bookingWindow.endTimeUtc, eventType.bufferMinutes);
+    const conflictingBooking = conflictingBookings.find(
+      (booking) =>
+        booking.startTimeUtc < newOccupiedEnd &&
+        addMinutes(booking.endTimeUtc, booking.eventType.bufferMinutes) > bookingWindow.startTimeUtc,
+    );
 
     if (conflictingBooking) {
       throw createHttpError(409, 'That time has just been booked. Please pick another slot.');

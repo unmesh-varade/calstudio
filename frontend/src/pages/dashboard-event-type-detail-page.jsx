@@ -77,6 +77,10 @@ export function DashboardEventTypeDetailPage() {
             <strong>{eventType?.bookingCount}</strong>
           </div>
           <div className="detail-row">
+            <span>Buffer</span>
+            <strong>{eventType?.bufferMinutes} minutes</strong>
+          </div>
+          <div className="detail-row">
             <span>Timezone</span>
             <strong>{eventType?.schedule?.timezone}</strong>
           </div>

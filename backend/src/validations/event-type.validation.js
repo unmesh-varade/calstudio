@@ -10,6 +10,7 @@ const eventTypeBodySchema = z.object({
   title: z.string().trim().min(1).max(120),
   description: z.string().trim().min(1).max(500),
   durationMinutes: z.coerce.number().int().positive().max(480),
+  bufferMinutes: z.coerce.number().int().min(0).max(240).default(0),
   slug: slugSchema,
   scheduleId: z.coerce.number().int().positive().optional(),
   isActive: booleanSchema.optional(),

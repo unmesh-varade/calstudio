@@ -91,6 +91,10 @@ export function PublicBookingPage() {
               {eventTypeQuery.data?.durationMinutes} minute meeting
             </span>
             <span>
+              <Clock3 size={15} />
+              {eventTypeQuery.data?.bufferMinutes || 0} minute buffer
+            </span>
+            <span>
               <Globe2 size={15} />
               {eventTypeQuery.data?.timezone}
             </span>

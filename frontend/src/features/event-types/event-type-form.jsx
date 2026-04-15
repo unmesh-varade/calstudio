@@ -5,6 +5,7 @@ const defaultValues = {
   slug: '',
   description: '',
   durationMinutes: '30',
+  bufferMinutes: '0',
   isActive: true,
 }
 
@@ -22,6 +23,7 @@ export function EventTypeForm({
     ...defaultValues,
     ...initialValues,
     durationMinutes: String(initialValues?.durationMinutes ?? defaultValues.durationMinutes),
+    bufferMinutes: String(initialValues?.bufferMinutes ?? defaultValues.bufferMinutes),
   }))
 
   useEffect(() => {
@@ -29,6 +31,7 @@ export function EventTypeForm({
       ...defaultValues,
       ...initialValues,
       durationMinutes: String(initialValues?.durationMinutes ?? defaultValues.durationMinutes),
+      bufferMinutes: String(initialValues?.bufferMinutes ?? defaultValues.bufferMinutes),
     })
   }, [initialValues])
 
@@ -47,6 +50,7 @@ export function EventTypeForm({
       slug: values.slug.trim(),
       description: values.description.trim(),
       durationMinutes: Number(values.durationMinutes),
+      bufferMinutes: Number(values.bufferMinutes),
       isActive: values.isActive,
     })
   }
@@ -109,6 +113,21 @@ export function EventTypeForm({
           />
         </label>
 
+        <label className="field">
+          <span className="field__label">Buffer after meeting</span>
+          <input
+            className="field__control"
+            max="240"
+            min="0"
+            onChange={(event) => updateField('bufferMinutes', event.target.value)}
+            required
+            type="number"
+            value={values.bufferMinutes}
+          />
+        </label>
+      </div>
+
+      <div className="form-grid">
         <label className="toggle-field">
           <input
             checked={values.isActive}

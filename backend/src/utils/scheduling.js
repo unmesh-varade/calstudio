@@ -16,8 +16,8 @@ function isSlotWithinWindow(startMinutes, durationMinutes, windowStartMinutes, w
   );
 }
 
-function isSlotAligned(startMinutes, windowStartMinutes, durationMinutes) {
-  return (startMinutes - windowStartMinutes) % durationMinutes === 0;
+function isSlotAligned(startMinutes, windowStartMinutes, intervalMinutes) {
+  return (startMinutes - windowStartMinutes) % intervalMinutes === 0;
 }
 
 function generateAvailableSlots({
@@ -26,17 +26,19 @@ function generateAvailableSlots({
   startTime,
   endTime,
   durationMinutes,
+  bufferMinutes = 0,
   bookedRanges = [],
   now = new Date(),
 }) {
   const windowStartMinutes = timeStringToMinutes(startTime);
   const windowEndMinutes = timeStringToMinutes(endTime);
+  const occupiedMinutes = durationMinutes + bufferMinutes;
   const slots = [];
 
   for (
     let slotStartMinutes = windowStartMinutes;
-    slotStartMinutes + durationMinutes <= windowEndMinutes;
-    slotStartMinutes += durationMinutes
+    slotStartMinutes + occupiedMinutes <= windowEndMinutes;
+    slotStartMinutes += occupiedMinutes
   ) {
     const time = minutesToTimeString(slotStartMinutes);
     const startUtc = zonedLocalTimeToUtc(dateString, time, timeZone);
