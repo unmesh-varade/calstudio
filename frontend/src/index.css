@@ -1224,10 +1224,15 @@ h3 {
 
   .dashboard-sidebar {
     position: static;
+    min-height: auto;
   }
 
   .booking-summary {
     position: static;
+  }
+
+  .sidebar-actions {
+    margin-top: 0;
   }
 
   .booking-card--split {
@@ -1275,5 +1280,9 @@ h3 {
   .confirmation-grid,
   .date-list--calendar {
     grid-template-columns: 1fr;
+  }
+
+  .sidebar-actions .button {
+    width: 100%;
   }
 }
