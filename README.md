@@ -83,30 +83,48 @@ The `Booking` model also stores rescheduling/self-service management fields:
 
 ### Event Types
 
-* Create, edit, and delete event types
-* Unique public booking links via slug
-* Configurable duration and description
+- Create, edit, and delete event types
+- Unique public booking links via slug
+- Configurable duration, description, and buffer time
+- Custom booking questions per event type
 
 ### Availability
 
-* Weekly availability rules (weekday + time range)
-* Timezone-aware scheduling
-* Slots generated dynamically based on rules
+- Weekly availability rules by weekday and time range
+- Timezone-aware scheduling
+- Slots generated dynamically from availability windows
 
 ### Public Booking Flow
 
-* Public profile and event pages
-* Calendar-based date selection
-* Real-time slot generation
-* Booking form with custom questions
-* Double booking prevention
-* Booking confirmation page
+- Public profile and event pages
+- Calendar-based date selection
+- Guest timezone-aware slot display
+- Real-time slot generation
+- Booking form with custom questions
+- Double booking prevention
+- Booking confirmation page
+- Immediate confirmation-page actions for guest reschedule or cancellation
 
 ### Bookings Dashboard
 
-* View upcoming, past, and cancelled bookings
-* Cancel bookings
-* Reschedule bookings (admin and guest flows)
+- View upcoming, past, and cancelled bookings
+- Review booking answers submitted by guests
+- Cancel bookings
+- Directly reschedule bookings as admin
+- Request reschedule by cancelling the current booking and notifying the guest to rebook
+
+### Notifications
+
+- Booking confirmation emails
+- Cancellation emails
+- Reschedule emails
+- Rebooking / request-reschedule emails
+
+### Interface
+
+- Responsive layout for desktop, tablet, and mobile
+- Shared booking-style UI patterns across public and admin flows
+- Reused slot-picker flow for booking and rescheduling
 
 ---
 
