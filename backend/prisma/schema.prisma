@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum BookingStatus {
+  scheduled
+  cancelled
+}
+
+model User {
+  id              Int                    @id @default(autoincrement())
+  username        String                 @unique
+  name            String
+  email           String                 @unique
+  defaultTimezone String                 @map("default_timezone")
+  createdAt       DateTime               @default(now()) @map("created_at")
+  updatedAt       DateTime               @updatedAt @map("updated_at")
+  schedules       AvailabilitySchedule[]
+  eventTypes      EventType[]
+  bookings        Booking[]
+
+  @@map("users")
+}
+
+model AvailabilitySchedule {
+  id        Int                @id @default(autoincrement())
+  userId    Int                @map("user_id")
+  name      String
+  timezone  String
+  isDefault Boolean            @default(false) @map("is_default")
+  createdAt DateTime           @default(now()) @map("created_at")
+  updatedAt DateTime           @updatedAt @map("updated_at")
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rules     AvailabilityRule[]
+  eventTypes EventType[]
+
+  @@index([userId])
+  @@map("availability_schedules")
+}
+
+model AvailabilityRule {
+  id         Int                  @id @default(autoincrement())
+  scheduleId Int                  @map("schedule_id")
+  weekday    Int
+  startTime  String               @map("start_time")
+  endTime    String               @map("end_time")
+  createdAt  DateTime             @default(now()) @map("created_at")
+  updatedAt  DateTime             @updatedAt @map("updated_at")
+  schedule   AvailabilitySchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  @@index([scheduleId, weekday])
+  @@map("availability_rules")
+}
+
+model EventType {
+  id              Int                  @id @default(autoincrement())
+  userId          Int                  @map("user_id")
+  scheduleId      Int                  @map("schedule_id")
+  title           String
+  slug            String               @unique
+  description     String
+  durationMinutes Int                  @map("duration_minutes")
+  isActive        Boolean              @default(true) @map("is_active")
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+  user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schedule        AvailabilitySchedule @relation(fields: [scheduleId], references: [id], onDelete: Restrict)
+  bookings        Booking[]
+
+  @@index([userId])
+  @@index([scheduleId])
+  @@map("event_types")
+}
+
+model Booking {
+  id               Int           @id @default(autoincrement())
+  userId           Int           @map("user_id")
+  eventTypeId      Int           @map("event_type_id")
+  attendeeName     String        @map("attendee_name")
+  attendeeEmail    String        @map("attendee_email")
+  attendeeTimezone String?       @map("attendee_timezone")
+  startTimeUtc     DateTime      @map("start_time_utc")
+  endTimeUtc       DateTime      @map("end_time_utc")
+  status           BookingStatus @default(scheduled)
+  cancelledAt      DateTime?     @map("cancelled_at")
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventType        EventType     @relation(fields: [eventTypeId], references: [id], onDelete: Restrict)
+
+  @@index([userId, status, startTimeUtc])
+  @@index([userId, status, endTimeUtc])
+  @@index([eventTypeId])
+  @@map("bookings")
+}
