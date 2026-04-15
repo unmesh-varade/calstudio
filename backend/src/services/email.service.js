@@ -73,6 +73,14 @@ async function deliverEmail(message) {
   });
 }
 
+function logEmailFailures(results) {
+  results.forEach((result) => {
+    if (result.status === 'rejected') {
+      console.error('[email delivery failed]', result.reason);
+    }
+  });
+}
+
 async function sendBookingCreatedEmails(booking) {
   const answerBlock = renderAnswers(booking.answers);
   const title = booking.eventType.title;
@@ -96,7 +104,7 @@ async function sendBookingCreatedEmails(booking) {
     answerBlock.text,
   ].join('\n');
 
-  await Promise.allSettled([
+  const results = await Promise.allSettled([
     deliverEmail({
       to: booking.attendeeEmail,
       subject: `Booking confirmed: ${title}`,
@@ -124,6 +132,8 @@ async function sendBookingCreatedEmails(booking) {
       `,
     }),
   ]);
+
+  logEmailFailures(results);
 }
 
 async function sendBookingCancelledEmails(booking) {
@@ -141,7 +151,7 @@ async function sendBookingCancelledEmails(booking) {
     `When: ${timeLabel}`,
   ].join('\n');
 
-  await Promise.allSettled([
+  const results = await Promise.allSettled([
     deliverEmail({
       to: booking.attendeeEmail,
       subject: `Booking cancelled: ${title}`,
@@ -164,6 +174,8 @@ async function sendBookingCancelledEmails(booking) {
       `,
     }),
   ]);
+
+  logEmailFailures(results);
 }
 
 module.exports = {

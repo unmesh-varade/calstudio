@@ -1,5 +1,4 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { addDays, format, startOfToday } from 'date-fns'
 import { ChevronLeft, ChevronRight, Clock3, Globe2, UserRound } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { DayPicker } from 'react-day-picker'
@@ -7,11 +6,13 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { QueryState } from '../components/query-state'
 import { api } from '../lib/api'
 import { timezoneOptions } from '../lib/timezones'
-import { formatDateLabel, formatDateTime } from '../lib/utils'
-
-function getInitialDate() {
-  return addDays(startOfToday(), 1)
-}
+import {
+  formatCalendarDateLabel,
+  formatDateTime,
+  getTomorrowCalendarDate,
+  normalizeCalendarDate,
+  toCalendarDateString,
+} from '../lib/utils'
 
 const defaultForm = {
   attendeeName: '',
@@ -30,12 +31,12 @@ function buildAnswerState(questions = []) {
 export function PublicBookingPage() {
   const { username, slug } = useParams()
   const navigate = useNavigate()
-  const [selectedDate, setSelectedDate] = useState(getInitialDate)
-  const [visibleMonth, setVisibleMonth] = useState(getInitialDate)
+  const [selectedDate, setSelectedDate] = useState(getTomorrowCalendarDate)
+  const [visibleMonth, setVisibleMonth] = useState(getTomorrowCalendarDate)
   const [selectedSlot, setSelectedSlot] = useState(null)
   const [formValues, setFormValues] = useState(defaultForm)
 
-  const selectedDateString = useMemo(() => format(selectedDate, 'yyyy-MM-dd'), [selectedDate])
+  const selectedDateString = useMemo(() => toCalendarDateString(selectedDate), [selectedDate])
 
   const eventTypeQuery = useQuery({
     queryKey: ['public-event-type', username, slug],
@@ -44,9 +45,9 @@ export function PublicBookingPage() {
   })
 
   const slotsQuery = useQuery({
-    queryKey: ['public-slots', username, slug, selectedDateString],
-    queryFn: () => api.getPublicSlots(username, slug, selectedDateString),
-    enabled: Boolean(username && slug),
+    queryKey: ['public-slots', username, slug, selectedDateString, formValues.attendeeTimezone],
+    queryFn: () => api.getPublicSlots(username, slug, selectedDateString, formValues.attendeeTimezone),
+    enabled: Boolean(username && slug && selectedDateString && formValues.attendeeTimezone),
   })
 
   const bookingMutation = useMutation({
@@ -75,7 +76,7 @@ export function PublicBookingPage() {
     bookingMutation.mutate({
       username,
       slug,
-      date: selectedDateString,
+      date: selectedSlot.eventDate,
       time: selectedSlot.time,
       attendeeName: formValues.attendeeName.trim(),
       attendeeEmail: formValues.attendeeEmail.trim(),
@@ -133,7 +134,7 @@ export function PublicBookingPage() {
             <div className="booking-selection">
               <strong>Selected</strong>
               <span>
-                {formatDateTime(selectedSlot.startTimeUtc, eventTypeQuery.data?.timezone || 'UTC')}
+                {formatDateTime(selectedSlot.startTimeUtc, formValues.attendeeTimezone || 'UTC')}
               </span>
             </div>
           ) : null}
@@ -152,11 +153,11 @@ export function PublicBookingPage() {
               Chevron: ({ orientation, ...props }) =>
                 orientation === 'left' ? <ChevronLeft {...props} size={16} /> : <ChevronRight {...props} size={16} />,
             }}
-            disabled={{ before: addDays(startOfToday(), 1) }}
+            disabled={{ before: getTomorrowCalendarDate() }}
             mode="single"
             month={visibleMonth}
             onMonthChange={(month) => {
-              setVisibleMonth(month)
+              setVisibleMonth(normalizeCalendarDate(month))
               setSelectedSlot(null)
             }}
             onSelect={(date) => {
@@ -164,8 +165,10 @@ export function PublicBookingPage() {
                 return
               }
 
-              setSelectedDate(date)
-              setVisibleMonth(date)
+              const normalizedDate = normalizeCalendarDate(date)
+
+              setSelectedDate(normalizedDate)
+              setVisibleMonth(normalizedDate)
               setSelectedSlot(null)
             }}
             selected={selectedDate}
@@ -178,8 +181,31 @@ export function PublicBookingPage() {
       <div className="booking-panel booking-panel--booking">
         <div className="booking-panel__heading">
           <p className="eyebrow">Choose a time</p>
-          <h2>{formatDateLabel(selectedDate, eventTypeQuery.data?.timezone || 'UTC')}</h2>
+          <h2>{formatCalendarDateLabel(selectedDateString)}</h2>
+          <p>Times shown in {formValues.attendeeTimezone || eventTypeQuery.data?.timezone || 'UTC'}</p>
         </div>
+
+        <label className="field booking-timezone-field">
+          <span className="field__label">View slots in your timezone</span>
+          <select
+            className="field__control"
+            onChange={(event) => {
+              setSelectedSlot(null)
+              setFormValues((current) => ({
+                ...current,
+                attendeeTimezone: event.target.value,
+              }))
+            }}
+            required
+            value={formValues.attendeeTimezone}
+          >
+            {timezoneOptions.map((timeZone) => (
+              <option key={timeZone} value={timeZone}>
+                {timeZone}
+              </option>
+            ))}
+          </select>
+        </label>
 
         <QueryState
           isLoading={slotsQuery.isLoading}
@@ -210,7 +236,7 @@ export function PublicBookingPage() {
               <h3>Enter your details</h3>
               <p>
                 You are booking{' '}
-                {formatDateTime(selectedSlot.startTimeUtc, eventTypeQuery.data?.timezone || 'UTC')}
+                {formatDateTime(selectedSlot.startTimeUtc, formValues.attendeeTimezone || 'UTC')}
               </p>
             </div>
 
@@ -245,10 +271,13 @@ export function PublicBookingPage() {
               <select
                 className="field__control"
                 onChange={(event) =>
-                  setFormValues((current) => ({
-                    ...current,
-                    attendeeTimezone: event.target.value,
-                  }))
+                  {
+                    setSelectedSlot(null)
+                    setFormValues((current) => ({
+                      ...current,
+                      attendeeTimezone: event.target.value,
+                    }))
+                  }
                 }
                 required
                 value={formValues.attendeeTimezone}

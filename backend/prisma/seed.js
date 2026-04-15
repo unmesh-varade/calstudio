@@ -18,7 +18,7 @@ const prisma = new PrismaClient({
   }),
 });
 
-const DEFAULT_TIMEZONE = 'Asia/Kolkata';
+const DEFAULT_TIMEZONE = 'Asia/Calcutta';
 
 function findWeekday(dateString, targetWeekday, direction) {
   let cursor = dateString;
@@ -68,7 +68,7 @@ async function main() {
   const user = await prisma.user.create({
     data: {
       username: 'codemorty',
-      name: 'Alex Morgan',
+      name: 'Unmesh',
       email: 'alex@cal.local',
       defaultTimezone: DEFAULT_TIMEZONE,
     },
@@ -147,7 +147,7 @@ async function main() {
   const introCallWithSchedule = { ...introCall, schedule };
   const projectReviewWithSchedule = { ...projectReview, schedule };
 
-  const [focusQuestion, notesQuestion] = introCall.questions;
+  const [notesQuestion] = introCall.questions;
 
   await prisma.booking.create({
     data: {
@@ -162,12 +162,6 @@ async function main() {
       }),
       answers: {
         create: [
-          {
-            questionId: focusQuestion.id,
-            questionLabel: focusQuestion.label,
-            questionType: focusQuestion.type,
-            value: 'Planning the next quarter launch and the messaging around it.',
-          },
           {
             questionId: notesQuestion.id,
             questionLabel: notesQuestion.label,
@@ -205,9 +199,9 @@ async function main() {
       answers: {
         create: [
           {
-            questionId: focusQuestion.id,
-            questionLabel: focusQuestion.label,
-            questionType: focusQuestion.type,
+            questionId: notesQuestion.id,
+            questionLabel: notesQuestion.label,
+            questionType: notesQuestion.type,
             value: 'Reviewing hiring priorities and whether product design should be the next role.',
           },
         ],
@@ -241,12 +235,6 @@ async function main() {
       }),
       answers: {
         create: [
-          {
-            questionId: focusQuestion.id,
-            questionLabel: focusQuestion.label,
-            questionType: focusQuestion.type,
-            value: 'Discussing roadmap tradeoffs before our internal planning sync.',
-          },
           {
             questionId: notesQuestion.id,
             questionLabel: notesQuestion.label,

@@ -1,46 +1,121 @@
 # Cal Studio
 
-Cal Studio is a Cal.com-inspired scheduling platform built as a single-admin MVP. It lets one default admin manage event types and weekly availability, share public booking links, accept guest bookings, and review or cancel bookings from an admin dashboard.
+Cal Studio is a Cal.com-inspired scheduling app built as a single-admin MVP. One organizer manages weekly availability and event types, shares public booking links, collects custom intake answers, receives bookings in UTC, and reviews or cancels them from a dashboard.
+
+## Overview
+
+The project has two apps:
+
+- `frontend/`: React + Vite single-page app for the public booking flow and admin dashboard
+- `backend/`: Express + Prisma API backed by PostgreSQL
+
+The current product supports:
+
+- event type CRUD
+- per-event buffer time
+- weekly availability with timezone-aware slot generation
+- public profile pages under `/:username`
+- public booking pages under `/:username/:slug`
+- attendee-selected timezone display for slots
+- custom booking questions
+- booking confirmation pages
+- admin bookings dashboard with submitted answers
+- booking cancellation
+- optional SMTP email notifications for booking create/cancel events
+- seeded demo data and scheduling tests
 
 ## Tech Stack
 
 Frontend:
+
 - React
 - Vite
 - React Router
 - TanStack Query
-- react-day-picker
+- `react-day-picker`
 - custom CSS
 
 Backend:
+
 - Node.js
 - Express
 - Prisma ORM
 - PostgreSQL
 - Zod validation
+- Nodemailer for SMTP email delivery
 
-## What’s Implemented
+## Current Features
 
-- Event type CRUD
-- Weekly availability management with timezone
-- Public profile page by username
-- Public booking page by username + event slug
-- Slot generation with overlap prevention
-- Guest booking form
-- Booking confirmation page
-- Admin bookings dashboard
-- Booking cancellation
-- Seeded demo data
-- Basic scheduling tests
+Implemented:
+
+- event type create, update, delete, list
+- event type fields: title, slug, description, duration, buffer, active state
+- custom booking questions per event type
+- weekly availability rules with a default schedule and timezone
+- public organizer profile by username
+- public event booking page by username and slug
+- attendee timezone selection for viewing slots
+- slot generation with overlap prevention and buffer-aware blocking
+- public booking confirmation page
+- booking answers shown in admin dashboard
+- upcoming, past, and cancelled booking views
+- booking cancellation from dashboard
+- seeded demo data with event questions and booking answers
+- backend scheduling tests
+
+Partially implemented foundations:
+
+- `AvailabilitySchedule` exists as a first-class model
+- event types already belong to schedules
+- the UI still manages only the default schedule in this MVP
+
+## Booking and Timezone Behavior
+
+A few rules are important to understand:
+
+- availability rules are authored in the event schedule's timezone
+- bookings are stored in UTC in the database
+- public attendees can choose a timezone for viewing slots
+- the public slot API returns only slots that fall on the attendee-selected local day
+- labels on the public booking page are shown in the attendee-selected timezone
+- when a slot is booked, the backend still saves the correct event-local slot by using the slot's underlying event date and time
+- cancelled bookings do not block future availability
+- overlapping bookings for the same organizer are not allowed, even across event types
+
+## Data Model
+
+Main Prisma models in `backend/prisma/schema.prisma`:
+
+- `User`
+  Organizer identity for this MVP. Includes `username`, `email`, `name`, and `defaultTimezone`.
+- `AvailabilitySchedule`
+  Stores named schedules and their timezone. The current UI uses the default one.
+- `AvailabilityRule`
+  Weekly weekday-based availability windows.
+- `EventType`
+  Public booking template with title, slug, duration, buffer time, schedule relation, and active state.
+- `EventTypeQuestion`
+  Custom intake questions attached to an event type.
+- `Booking`
+  Saved meeting instance with attendee info, UTC times, status, and cancellation timestamp.
+- `BookingAnswer`
+  Stored responses to custom booking questions.
+
+Enums:
+
+- `BookingStatus`: `scheduled`, `cancelled`
+- `BookingQuestionType`: `shortText`, `longText`
 
 ## Public Routes
 
-- `/` landing page
-- `/:username` public profile page
-- `/:username/:slug` public booking page
-- `/booking/:bookingId?email=guest@example.com` confirmation page
+App routes:
 
-Sample seeded public URLs after seeding:
+- `/`
+- `/:username`
+- `/:username/:slug`
+- `/booking/:bookingId?email=guest@example.com`
+
+Sample seeded URLs after seeding:
 
 - `/codemorty`
 - `/codemorty/intro-call`
@@ -56,7 +131,9 @@ Sample seeded public URLs after seeding:
 
 ## API Overview
 
-Admin:
+Admin API:
+
+- `GET /api/health`
 - `GET /api/event-types`
 - `POST /api/event-types`
 - `PATCH /api/event-types/:id`
@@ -66,23 +143,15 @@ Admin:
 - `GET /api/bookings?view=upcoming|past|cancelled`
 - `PATCH /api/bookings/:id/cancel`
 
-Public:
+Public API:
+
 - `GET /api/public/profiles/:username`
 - `GET /api/public/profiles/:username/event-types/:slug`
-- `GET /api/public/profiles/:username/event-types/:slug/slots?date=YYYY-MM-DD`
+- `GET /api/public/profiles/:username/event-types/:slug/slots?date=YYYY-MM-DD&timezone=Area/City`
 - `POST /api/public/bookings`
 - `GET /api/public/bookings/:bookingId?email=guest@example.com`
 
-Infra:
-- `GET /api/health`
-
 ## Project Structure
-
-```txt
-frontend/
-backend/
-README.md
-```
 
 ```txt
 backend/
@@ -94,26 +163,24 @@ backend/
   src/
     app.js
     server.js
-    routes/
-    controllers/
-    services/
-    validations/
-    middleware/
-    utils/
     config/
+    controllers/
     db/
+    middleware/
+    routes/
+    services/
+    utils/
+    validations/
   tests/
-```
-
-```txt
 frontend/
   src/
     app/
-    pages/
-    layouts/
     components/
     features/
+    layouts/
     lib/
+    pages/
+README.md
 ```
 
 ## Environment Variables
@@ -123,10 +190,41 @@ Backend:
 - `PORT`
 - `DATABASE_URL`
 - `CORS_ORIGIN`
+- `EMAIL_FROM`
+- `SMTP_HOST`
+- `SMTP_PORT`
+- `SMTP_USER`
+- `SMTP_PASS`
+- `SMTP_SECURE`
 
 Frontend:
 
 - `VITE_API_BASE_URL`
+
+Example root `.env.example`:
+
+```env
+# Backend
+PORT=4000
+DATABASE_URL=postgresql://username:password@host:5432/database?sslmode=require
+CORS_ORIGIN=http://localhost:5173
+
+EMAIL_FROM=yourgmail@gmail.com
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_USER=yourgmail@gmail.com
+SMTP_PASS=your_16_character_app_password
+SMTP_SECURE=true
+
+# Frontend
+VITE_API_BASE_URL=http://localhost:4000/api
+```
+
+Notes:
+
+- email is optional for local development
+- if SMTP is not configured, the app skips delivery and logs the notification payload instead
+- Gmail testing works with an app password; production apps are better served by a transactional email provider or verified domain setup
 
 ## Local Setup
 
@@ -148,15 +246,22 @@ npm install
 
 ### 2. Configure environment variables
 
-Backend `.env`:
+Backend `backend/.env`:
 
 ```env
 PORT=4000
 DATABASE_URL=your_postgres_connection_string
 CORS_ORIGIN=http://localhost:5173
+
+EMAIL_FROM=yourgmail@gmail.com
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_USER=yourgmail@gmail.com
+SMTP_PASS=your_16_character_app_password
+SMTP_SECURE=true
 ```
 
-Frontend `.env`:
+Frontend env:
 
 ```env
 VITE_API_BASE_URL=http://localhost:4000/api
@@ -196,93 +301,111 @@ From `frontend/`:
 npm run dev
 ```
 
-## Helpful Database Scripts
+## Useful Scripts
 
-Clear all rows without dropping tables:
+Backend:
+
+```bash
+cd backend
+npm run prisma:generate
+npm run prisma:migrate
+npm run prisma:seed
+npm test
+```
+
+Clear all table rows without dropping tables:
 
 ```bash
 cd backend
 node prisma/clear.js
 ```
 
-Seed again:
+Frontend build:
 
 ```bash
-cd backend
-npm run prisma:seed
+cd frontend
+npm run build
 ```
 
-## Running Tests
+## Seeded Demo Data
 
-From `backend/`:
+The seed script currently creates:
 
-```bash
-npm test
-```
+- 1 organizer user
+  `username: codemorty`
+- 1 default availability schedule
+  Monday-Friday, `09:00` to `17:00`, timezone `Asia/Kolkata`
+- 2 event types
+  `Intro Call` and `Project Review`
+- buffer time examples
+  `Intro Call` uses a buffer, `Project Review` does not
+- custom question example
+  `Intro Call` includes `Additional notes`
+- sample bookings across states
+  upcoming, past, and cancelled
+- seeded booking answers for the `Additional notes` question
 
-Current tests cover key scheduling rules:
+## Tests
+
+Current backend tests cover core scheduling rules in `backend/tests/scheduling.test.js`:
+
 - overlap detection
 - slot alignment
-- slot generation excluding booked and past times
+- slot generation excluding past/booked slots
+- buffer-time-aware slot blocking
 
 ## Core Business Rules
 
-- There is only one admin in this MVP
-- Event type slug is unique
-- Public pages are organized under the admin username
-- Booking duration comes from the event type
-- Bookings are stored in UTC
-- Availability is interpreted in the admin’s selected timezone
-- Cancelled bookings do not block future slots
-- Overlapping bookings for the same admin are not allowed, even across event types
+- this is a single-admin MVP with no authentication yet
+- event type slug is globally unique
+- public pages are organized by organizer username
+- booking duration and buffer time come from the event type
+- availability windows are interpreted in the schedule timezone
+- bookings are stored in UTC
+- public slot labels can be displayed in the attendee's chosen timezone
+- cancelled bookings do not consume future availability
+- organizer-side overlap checks are enforced during booking creation
+- custom question answers are stored with each booking for later review
 
-Overlap rule:
+Overlap rule used during scheduling:
 
 ```txt
 newStart < existingEnd && newEnd > existingStart
 ```
 
-## Seeded Demo Data
+## Assumptions and Tradeoffs
 
-The seed script creates:
-
-- 1 default admin user
-- username: `codemorty`
-- 1 default availability schedule
-- weekday rules for Monday to Friday
-- 2 sample event types
-- upcoming bookings
-- past bookings
-- cancelled bookings
-
-## Assumptions
-
-- Authentication is intentionally omitted
-- The product is a single-admin MVP
-- Public booking links are accessible without login
-- Username-based public routing was chosen to better match the Cal.com mental model
-- Styling uses custom CSS instead of Tailwind to keep the visual system explicit and lightweight
+- authentication and multi-user admin support are intentionally out of scope
+- the dashboard currently edits only the default availability schedule even though the schema supports multiple schedules
+- date overrides and rescheduling are not implemented yet
+- email delivery is best-effort and non-blocking; booking creation should not fail just because email delivery fails
+- custom questions currently support `shortText` and `longText`
+- styling uses custom CSS instead of Tailwind to keep the visual system explicit and lightweight
 
 ## Deployment Notes
 
-Suggested setup:
+Suggested deployment stack:
 
-- Frontend: Vercel or Netlify
-- Backend: Render or Railway
-- Database: Neon
+- frontend: Vercel or Netlify
+- backend: Render or Railway
+- database: Neon
 
 Typical deployment flow:
 
-1. Deploy PostgreSQL database
-2. Set backend env vars and deploy backend
-3. Set frontend `VITE_API_BASE_URL` to deployed backend API URL
-4. Deploy frontend
+1. create the PostgreSQL database
+2. configure backend environment variables
+3. run migrations on the backend deployment
+4. deploy backend
+5. point `VITE_API_BASE_URL` at the deployed API
+6. deploy frontend
 
-## Interview Notes
+## Future Work
 
-If asked about tradeoffs:
+Natural next feature areas:
 
-- Prisma was used to keep schema and database access explicit
-- Scheduling logic was separated into utilities and services for easier testing
-- The public routing model uses `/:username/:slug` to mirror Cal.com more closely than a flat slug-only route
-- The app prioritizes correctness of booking logic and clarity of explanation over feature breadth
+- full multi-schedule management UI
+- date overrides / blocked dates
+- booking rescheduling flow
+- richer booking question types
+- stronger email delivery observability
+- authentication and multi-user support

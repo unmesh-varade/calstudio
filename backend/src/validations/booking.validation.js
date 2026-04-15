@@ -29,6 +29,7 @@ const publicBookingConfirmationQuerySchema = z.object({
 
 const publicSlotsQuerySchema = z.object({
   date: dateSchema,
+  timezone: timeZoneSchema.optional(),
 });
 
 const bookingAnswerSchema = z.object({

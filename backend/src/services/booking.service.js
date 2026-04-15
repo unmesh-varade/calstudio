@@ -228,29 +228,53 @@ async function getPublicEventType(username, slug) {
   return serializeEventTypeForPublic(eventType);
 }
 
-async function getAvailableSlots(username, slug, dateString) {
-  const eventType = await getActiveEventTypeByUsernameAndSlugOrThrow(username, slug);
-  const rule = getRuleForDate(eventType, dateString);
+function unique(values) {
+  return [...new Set(values)];
+}
 
-  if (!rule) {
+async function getAvailableSlots(username, slug, dateString, viewerTimeZone) {
+  const eventType = await getActiveEventTypeByUsernameAndSlugOrThrow(username, slug);
+  const displayTimeZone = viewerTimeZone || eventType.schedule.timezone;
+  const displayDayRange = getUtcRangeForLocalDay(dateString, displayTimeZone);
+  const candidateEventDates = unique([
+    formatDateTimeInTimeZone(displayDayRange.start, eventType.schedule.timezone).date,
+    formatDateTimeInTimeZone(new Date(displayDayRange.end.getTime() - 1), eventType.schedule.timezone)
+      .date,
+  ]);
+  const eventDateRanges = candidateEventDates.map((eventDate) => ({
+    eventDate,
+    rule: getRuleForDate(eventType, eventDate),
+    range: getUtcRangeForLocalDay(eventDate, eventType.schedule.timezone),
+  }));
+  const activeEventDateRanges = eventDateRanges.filter((entry) => entry.rule);
+
+  if (!activeEventDateRanges.length) {
     return {
       date: dateString,
-      timeZone: eventType.schedule.timezone,
+      timeZone: displayTimeZone,
+      eventTimeZone: eventType.schedule.timezone,
       eventType: serializeEventTypeForPublic(eventType),
       slots: [],
     };
   }
 
-  const dayRange = getUtcRangeForLocalDay(dateString, eventType.schedule.timezone);
+  const queryStart = activeEventDateRanges.reduce(
+    (earliest, entry) => (entry.range.start < earliest ? entry.range.start : earliest),
+    activeEventDateRanges[0].range.start,
+  );
+  const queryEnd = activeEventDateRanges.reduce(
+    (latest, entry) => (entry.range.end > latest ? entry.range.end : latest),
+    activeEventDateRanges[0].range.end,
+  );
   const scheduledBookings = await prisma.booking.findMany({
     where: {
       userId: eventType.userId,
       status: 'scheduled',
       startTimeUtc: {
-        lt: dayRange.end,
+        lt: queryEnd,
       },
       endTimeUtc: {
-        gt: dayRange.start,
+        gt: queryStart,
       },
     },
     select: {
@@ -263,27 +287,39 @@ async function getAvailableSlots(username, slug, dateString) {
       },
     },
   });
-
-  const slots = generateAvailableSlots({
-    dateString,
-    timeZone: eventType.schedule.timezone,
-    startTime: rule.startTime,
-    endTime: rule.endTime,
-    durationMinutes: eventType.durationMinutes,
-    bufferMinutes: eventType.bufferMinutes,
-    bookedRanges: scheduledBookings.map((booking) => ({
-      start: booking.startTimeUtc,
-      end: addMinutes(booking.endTimeUtc, booking.eventType.bufferMinutes),
-    })),
-  });
+  const bookedRanges = scheduledBookings.map((booking) => ({
+    start: booking.startTimeUtc,
+    end: addMinutes(booking.endTimeUtc, booking.eventType.bufferMinutes),
+  }));
+  const slots = activeEventDateRanges
+    .flatMap(({ eventDate, rule }) =>
+      generateAvailableSlots({
+        dateString: eventDate,
+        timeZone: eventType.schedule.timezone,
+        startTime: rule.startTime,
+        endTime: rule.endTime,
+        durationMinutes: eventType.durationMinutes,
+        bufferMinutes: eventType.bufferMinutes,
+        bookedRanges,
+      }).map((slot) => ({
+        ...slot,
+        eventDate,
+      })),
+    )
+    .filter(
+      (slot) => slot.startUtc >= displayDayRange.start && slot.startUtc < displayDayRange.end,
+    )
+    .sort((left, right) => left.startUtc - right.startUtc);
 
   return {
     date: dateString,
-    timeZone: eventType.schedule.timezone,
+    timeZone: displayTimeZone,
+    eventTimeZone: eventType.schedule.timezone,
     eventType: serializeEventTypeForPublic(eventType),
     slots: slots.map((slot) => ({
       time: slot.time,
-      label: formatTimeLabel(slot.startUtc, eventType.schedule.timezone),
+      eventDate: slot.eventDate,
+      label: formatTimeLabel(slot.startUtc, displayTimeZone),
       startTimeUtc: slot.startUtc.toISOString(),
       endTimeUtc: slot.endUtc.toISOString(),
     })),

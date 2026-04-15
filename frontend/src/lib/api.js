@@ -58,9 +58,11 @@ export const api = {
   getPublicProfile: (username) => request(`/public/profiles/${username}`),
   getPublicEventType: (username, slug) =>
     request(`/public/profiles/${username}/event-types/${slug}`),
-  getPublicSlots: (username, slug, date) =>
+  getPublicSlots: (username, slug, date, timeZone) =>
     request(
-      `/public/profiles/${username}/event-types/${slug}/slots?date=${encodeURIComponent(date)}`,
+      `/public/profiles/${username}/event-types/${slug}/slots?date=${encodeURIComponent(date)}${
+        timeZone ? `&timezone=${encodeURIComponent(timeZone)}` : ''
+      }`,
     ),
   createPublicBooking: (payload) =>
     request('/public/bookings', {

@@ -13,6 +13,7 @@ async function getPublicSlots(req, res) {
     req.validated.params.username,
     req.validated.params.slug,
     req.validated.query.date,
+    req.validated.query.timezone,
   );
   res.json({ data });
 }
