@@ -4,11 +4,14 @@ const controller = require('../controllers/public.controller');
 const { validateRequest } = require('../middleware/validate-request');
 const {
   createPublicBookingSchema,
+  manageTokenQuerySchema,
+  publicCancelBookingBodySchema,
   publicBookingConfirmationParamsSchema,
   publicBookingConfirmationQuerySchema,
   publicProfileParamsSchema,
   publicSlugParamsSchema,
   publicSlotsQuerySchema,
+  rescheduleBookingBodySchema,
 } = require('../validations/booking.validation');
 
 const router = express.Router();
@@ -35,6 +38,40 @@ router.get(
     query: publicBookingConfirmationQuerySchema,
   }),
   controller.getPublicBookingConfirmation,
+);
+router.get(
+  '/bookings/:bookingId/manage',
+  validateRequest({
+    params: publicBookingConfirmationParamsSchema,
+    query: manageTokenQuerySchema,
+  }),
+  controller.getPublicManageBooking,
+);
+router.get(
+  '/bookings/:bookingId/reschedule/slots',
+  validateRequest({
+    params: publicBookingConfirmationParamsSchema,
+    query: manageTokenQuerySchema.merge(publicSlotsQuerySchema),
+  }),
+  controller.getPublicRescheduleSlots,
+);
+router.post(
+  '/bookings/:bookingId/reschedule',
+  validateRequest({
+    params: publicBookingConfirmationParamsSchema,
+    query: manageTokenQuerySchema,
+    body: rescheduleBookingBodySchema,
+  }),
+  controller.reschedulePublicBooking,
+);
+router.post(
+  '/bookings/:bookingId/cancel',
+  validateRequest({
+    params: publicBookingConfirmationParamsSchema,
+    query: manageTokenQuerySchema,
+    body: publicCancelBookingBodySchema,
+  }),
+  controller.cancelPublicBooking,
 );
 router.post(
   '/bookings',

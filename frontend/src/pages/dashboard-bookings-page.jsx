@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 import { useMemo, useState } from 'react'
 import { QueryState } from '../components/query-state'
 import { api } from '../lib/api'
@@ -9,6 +10,7 @@ const views = ['upcoming', 'past', 'cancelled']
 export function DashboardBookingsPage() {
   const [view, setView] = useState('upcoming')
   const [pendingCancelId, setPendingCancelId] = useState(null)
+  const [pendingRequestId, setPendingRequestId] = useState(null)
   const queryClient = useQueryClient()
 
   const bookingsQuery = useQuery({
@@ -24,6 +26,17 @@ export function DashboardBookingsPage() {
     },
     onError: () => {
       setPendingCancelId(null)
+    },
+  })
+
+  const requestRescheduleMutation = useMutation({
+    mutationFn: api.requestRescheduleBooking,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bookings'] })
+      setPendingRequestId(null)
+    },
+    onError: () => {
+      setPendingRequestId(null)
     },
   })
 
@@ -50,6 +63,17 @@ export function DashboardBookingsPage() {
     }
   }
 
+  function handleRequestReschedule(booking) {
+    const confirmed = window.confirm(
+      `Mark the ${booking.eventType.title} booking for ${booking.attendeeName} as needing a new booking?`,
+    )
+
+    if (confirmed) {
+      setPendingRequestId(booking.id)
+      requestRescheduleMutation.mutate(booking.id)
+    }
+  }
+
   return (
     <section className="page-stack">
       <div className="page-heading">
@@ -72,8 +96,10 @@ export function DashboardBookingsPage() {
         </div>
       </div>
 
-      {cancelMutation.error ? (
-        <div className="form-message form-message--error">{cancelMutation.error.message}</div>
+      {cancelMutation.error || requestRescheduleMutation.error ? (
+        <div className="form-message form-message--error">
+          {cancelMutation.error?.message || requestRescheduleMutation.error?.message}
+        </div>
       ) : null}
 
       <QueryState
@@ -133,6 +159,17 @@ export function DashboardBookingsPage() {
 
               {view === 'upcoming' ? (
                 <div className="booking-card__actions">
+                  <Link className="button button--ghost booking-card__action-button" to={`/dashboard/bookings/${booking.id}/reschedule`}>
+                    Reschedule
+                  </Link>
+                  <button
+                    className="button button--ghost booking-card__action-button"
+                    disabled={pendingRequestId === booking.id}
+                    onClick={() => handleRequestReschedule(booking)}
+                    type="button"
+                  >
+                    {pendingRequestId === booking.id ? 'Sending...' : 'Request reschedule'}
+                  </button>
                   <button
                     className="button button--ghost button--danger booking-card__action-button"
                     disabled={pendingCancelId === booking.id}

@@ -69,7 +69,7 @@ async function main() {
     data: {
       username: 'codemorty',
       name: 'Unmesh',
-      email: 'alex@cal.local',
+      email: 'codemorty324@gmail.com',
       defaultTimezone: DEFAULT_TIMEZONE,
     },
   });

@@ -27,6 +27,10 @@ const publicBookingConfirmationQuerySchema = z.object({
   email: z.string().trim().email(),
 });
 
+const manageTokenQuerySchema = z.object({
+  token: z.string().trim().min(1),
+});
+
 const publicSlotsQuerySchema = z.object({
   date: dateSchema,
   timezone: timeZoneSchema.optional(),
@@ -48,13 +52,32 @@ const createPublicBookingSchema = z.object({
   answers: z.array(bookingAnswerSchema).max(8).default([]),
 });
 
+const rescheduleBookingBodySchema = z.object({
+  date: dateSchema,
+  time: timeSchema,
+  attendeeTimezone: timeZoneSchema.optional(),
+  reason: z.string().trim().max(500).optional(),
+});
+
+const requestRescheduleBodySchema = z.object({
+  reason: z.string().trim().max(500).optional(),
+});
+
+const publicCancelBookingBodySchema = z.object({
+  reason: z.string().trim().max(500).optional(),
+});
+
 module.exports = {
   bookingIdSchema,
   bookingListQuerySchema,
   createPublicBookingSchema,
+  manageTokenQuerySchema,
+  publicCancelBookingBodySchema,
   publicBookingConfirmationParamsSchema,
   publicBookingConfirmationQuerySchema,
   publicProfileParamsSchema,
   publicSlugParamsSchema,
   publicSlotsQuerySchema,
+  requestRescheduleBodySchema,
+  rescheduleBookingBodySchema,
 };

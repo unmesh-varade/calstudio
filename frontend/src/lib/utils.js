@@ -86,3 +86,32 @@ export function formatCalendarDateLabel(value) {
     timeZone: 'UTC',
   }).format(new Date(Date.UTC(year, month - 1, day)))
 }
+
+export function getCalendarDateInTimeZone(value, timeZone) {
+  if (!value) {
+    return null
+  }
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return null
+  }
+
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+  const parts = formatter.formatToParts(date)
+  const values = {}
+
+  parts.forEach((part) => {
+    if (part.type !== 'literal') {
+      values[part.type] = Number(part.value)
+    }
+  })
+
+  return new Date(values.year, values.month - 1, values.day, 12, 0, 0, 0)
+}

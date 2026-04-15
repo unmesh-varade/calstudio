@@ -15,6 +15,8 @@ const { getAdminUserOrThrow } = require('./admin.service');
 const {
   sendBookingCancelledEmails,
   sendBookingCreatedEmails,
+  sendBookingRequestedRescheduleEmails,
+  sendBookingRescheduledEmails,
 } = require('./email.service');
 
 const bookingInclude = {
@@ -27,6 +29,33 @@ const bookingInclude = {
     include: {
       user: true,
       schedule: true,
+    },
+  },
+};
+
+const bookingManageInclude = {
+  answers: {
+    orderBy: {
+      createdAt: 'asc',
+    },
+  },
+  eventType: {
+    include: {
+      user: true,
+      schedule: {
+        include: {
+          rules: {
+            orderBy: {
+              weekday: 'asc',
+            },
+          },
+        },
+      },
+      questions: {
+        orderBy: {
+          sortOrder: 'asc',
+        },
+      },
     },
   },
 };
@@ -56,6 +85,10 @@ function serializeEventTypeForPublic(eventType) {
   };
 }
 
+function buildLocalTimeLabel(date, timeZone) {
+  return `${formatDateLabel(date, timeZone)} at ${formatTimeLabel(date, timeZone)}`;
+}
+
 function serializeBooking(booking) {
   const scheduleTimeZone = booking.eventType.schedule.timezone;
   const localStart = formatDateTimeInTimeZone(booking.startTimeUtc, scheduleTimeZone);
@@ -66,38 +99,51 @@ function serializeBooking(booking) {
     attendeeName: booking.attendeeName,
     attendeeEmail: booking.attendeeEmail,
     attendeeTimezone: booking.attendeeTimezone,
+    manageToken: booking.manageToken,
     status: booking.status,
     cancelledAt: booking.cancelledAt,
     startTimeUtc: booking.startTimeUtc.toISOString(),
     endTimeUtc: booking.endTimeUtc.toISOString(),
+    rescheduledAt: booking.rescheduledAt?.toISOString() ?? null,
+    rescheduleReason: booking.rescheduleReason ?? null,
+    previousStartTimeUtc: booking.previousStartTimeUtc?.toISOString() ?? null,
+    previousEndTimeUtc: booking.previousEndTimeUtc?.toISOString() ?? null,
+    previousLocalStart: booking.previousStartTimeUtc
+      ? {
+          label: buildLocalTimeLabel(booking.previousStartTimeUtc, scheduleTimeZone),
+          timeZone: scheduleTimeZone,
+        }
+      : null,
+    previousLocalEnd: booking.previousEndTimeUtc
+      ? {
+          label: buildLocalTimeLabel(booking.previousEndTimeUtc, scheduleTimeZone),
+          timeZone: scheduleTimeZone,
+        }
+      : null,
     localStart: {
       date: localStart.date,
       time: localStart.time,
-      label: `${formatDateLabel(booking.startTimeUtc, scheduleTimeZone)} at ${formatTimeLabel(
-        booking.startTimeUtc,
-        scheduleTimeZone,
-      )}`,
+      label: buildLocalTimeLabel(booking.startTimeUtc, scheduleTimeZone),
       timeZone: scheduleTimeZone,
     },
     localEnd: {
       date: localEnd.date,
       time: localEnd.time,
-      label: `${formatDateLabel(booking.endTimeUtc, scheduleTimeZone)} at ${formatTimeLabel(
-        booking.endTimeUtc,
-        scheduleTimeZone,
-      )}`,
+      label: buildLocalTimeLabel(booking.endTimeUtc, scheduleTimeZone),
       timeZone: scheduleTimeZone,
     },
     eventType: {
       id: booking.eventType.id,
       title: booking.eventType.title,
       slug: booking.eventType.slug,
+      description: booking.eventType.description,
       durationMinutes: booking.eventType.durationMinutes,
       bufferMinutes: booking.eventType.bufferMinutes,
       timezone: scheduleTimeZone,
       organizer: {
         name: booking.eventType.user.name,
         email: booking.eventType.user.email,
+        username: booking.eventType.user.username,
       },
     },
     answers: (booking.answers || []).map((answer) => ({
@@ -109,38 +155,6 @@ function serializeBooking(booking) {
     })),
     organizerUsername: booking.eventType.user.username,
   };
-}
-
-async function getActiveEventTypeBySlugOrThrow(slug) {
-  const eventType = await prisma.eventType.findFirst({
-    where: {
-      slug,
-      isActive: true,
-    },
-    include: {
-      user: true,
-      schedule: {
-        include: {
-          rules: {
-            orderBy: {
-              weekday: 'asc',
-            },
-          },
-        },
-      },
-      questions: {
-        orderBy: {
-          sortOrder: 'asc',
-        },
-      },
-    },
-  });
-
-  if (!eventType) {
-    throw createHttpError(404, 'Public event type not found.');
-  }
-
-  return eventType;
 }
 
 async function getActiveEventTypeByUsernameAndSlugOrThrow(username, slug) {
@@ -181,6 +195,43 @@ async function getActiveEventTypeByUsernameAndSlugOrThrow(username, slug) {
 function getRuleForDate(eventType, dateString) {
   const weekday = getWeekdayFromDateString(dateString);
   return eventType.schedule.rules.find((rule) => rule.weekday === weekday) || null;
+}
+
+function unique(values) {
+  return [...new Set(values)];
+}
+
+async function getBookingByAdminOrThrow(id, include = bookingInclude) {
+  const admin = await getAdminUserOrThrow();
+  const booking = await prisma.booking.findFirst({
+    where: {
+      id,
+      userId: admin.id,
+    },
+    include,
+  });
+
+  if (!booking) {
+    throw createHttpError(404, 'Booking not found.');
+  }
+
+  return booking;
+}
+
+async function getBookingByManageTokenOrThrow(id, token, include = bookingManageInclude) {
+  const booking = await prisma.booking.findFirst({
+    where: {
+      id,
+      manageToken: token,
+    },
+    include,
+  });
+
+  if (!booking) {
+    throw createHttpError(404, 'Booking not found.');
+  }
+
+  return booking;
 }
 
 async function getPublicProfile(username) {
@@ -228,12 +279,7 @@ async function getPublicEventType(username, slug) {
   return serializeEventTypeForPublic(eventType);
 }
 
-function unique(values) {
-  return [...new Set(values)];
-}
-
-async function getAvailableSlots(username, slug, dateString, viewerTimeZone) {
-  const eventType = await getActiveEventTypeByUsernameAndSlugOrThrow(username, slug);
+async function getSlotPayloadForEventType({ eventType, userId, dateString, viewerTimeZone, excludeBookingId }) {
   const displayTimeZone = viewerTimeZone || eventType.schedule.timezone;
   const displayDayRange = getUtcRangeForLocalDay(dateString, displayTimeZone);
   const candidateEventDates = unique([
@@ -266,10 +312,16 @@ async function getAvailableSlots(username, slug, dateString, viewerTimeZone) {
     (latest, entry) => (entry.range.end > latest ? entry.range.end : latest),
     activeEventDateRanges[0].range.end,
   );
+
   const scheduledBookings = await prisma.booking.findMany({
     where: {
-      userId: eventType.userId,
+      userId,
       status: 'scheduled',
+      id: excludeBookingId
+        ? {
+            not: excludeBookingId,
+          }
+        : undefined,
       startTimeUtc: {
         lt: queryEnd,
       },
@@ -278,6 +330,7 @@ async function getAvailableSlots(username, slug, dateString, viewerTimeZone) {
       },
     },
     select: {
+      id: true,
       startTimeUtc: true,
       endTimeUtc: true,
       eventType: {
@@ -287,10 +340,12 @@ async function getAvailableSlots(username, slug, dateString, viewerTimeZone) {
       },
     },
   });
+
   const bookedRanges = scheduledBookings.map((booking) => ({
     start: booking.startTimeUtc,
     end: addMinutes(booking.endTimeUtc, booking.eventType.bufferMinutes),
   }));
+
   const slots = activeEventDateRanges
     .flatMap(({ eventDate, rule }) =>
       generateAvailableSlots({
@@ -326,6 +381,16 @@ async function getAvailableSlots(username, slug, dateString, viewerTimeZone) {
   };
 }
 
+async function getAvailableSlots(username, slug, dateString, viewerTimeZone) {
+  const eventType = await getActiveEventTypeByUsernameAndSlugOrThrow(username, slug);
+  return getSlotPayloadForEventType({
+    eventType,
+    userId: eventType.userId,
+    dateString,
+    viewerTimeZone,
+  });
+}
+
 function buildBookingWindow(eventType, dateString, timeString) {
   const rule = getRuleForDate(eventType, dateString);
 
@@ -338,14 +403,7 @@ function buildBookingWindow(eventType, dateString, timeString) {
   const windowEndMinutes = timeStringToMinutes(rule.endTime);
   const occupiedMinutes = eventType.durationMinutes + eventType.bufferMinutes;
 
-  if (
-    !isSlotWithinWindow(
-      slotStartMinutes,
-      occupiedMinutes,
-      windowStartMinutes,
-      windowEndMinutes,
-    )
-  ) {
+  if (!isSlotWithinWindow(slotStartMinutes, occupiedMinutes, windowStartMinutes, windowEndMinutes)) {
     throw createHttpError(400, 'The selected slot falls outside the availability window.');
   }
 
@@ -390,6 +448,58 @@ function normalizeBookingAnswers(eventType, submittedAnswers = []) {
   });
 }
 
+async function ensureNoConflict(tx, { userId, bookingWindow, eventType, excludeBookingId }) {
+  const newOccupiedEnd = addMinutes(bookingWindow.endTimeUtc, eventType.bufferMinutes);
+  const conflictingBookings = await tx.booking.findMany({
+    where: {
+      userId,
+      status: 'scheduled',
+      id: excludeBookingId
+        ? {
+            not: excludeBookingId,
+          }
+        : undefined,
+      startTimeUtc: {
+        lt: newOccupiedEnd,
+      },
+      endTimeUtc: {
+        gt: bookingWindow.startTimeUtc,
+      },
+    },
+    include: {
+      eventType: {
+        select: {
+          bufferMinutes: true,
+        },
+      },
+    },
+  });
+
+  const conflictingBooking = conflictingBookings.find(
+    (booking) =>
+      booking.startTimeUtc < newOccupiedEnd &&
+      addMinutes(booking.endTimeUtc, booking.eventType.bufferMinutes) > bookingWindow.startTimeUtc,
+  );
+
+  if (conflictingBooking) {
+    throw createHttpError(409, 'That time has just been booked. Please pick another slot.');
+  }
+}
+
+function assertBookingCanBeManaged(booking) {
+  if (booking.status === 'cancelled') {
+    throw createHttpError(409, 'This booking has already been cancelled.');
+  }
+
+  if (booking.endTimeUtc <= new Date()) {
+    throw createHttpError(409, 'Past bookings cannot be changed.');
+  }
+}
+
+function buildPublicEventPath(booking) {
+  return `/${booking.eventType.user.username}/${booking.eventType.slug}`;
+}
+
 async function createPublicBooking(payload) {
   const eventType = await getActiveEventTypeByUsernameAndSlugOrThrow(payload.username, payload.slug);
   const bookingWindow = buildBookingWindow(eventType, payload.date, payload.time);
@@ -398,33 +508,11 @@ async function createPublicBooking(payload) {
   const booking = await prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(${eventType.userId})`;
 
-    const conflictingBookings = await tx.booking.findMany({
-      where: {
-        userId: eventType.userId,
-        status: 'scheduled',
-        endTimeUtc: {
-          gt: bookingWindow.startTimeUtc,
-        },
-      },
-      include: {
-        eventType: {
-          select: {
-            bufferMinutes: true,
-          },
-        },
-      },
+    await ensureNoConflict(tx, {
+      userId: eventType.userId,
+      bookingWindow,
+      eventType,
     });
-
-    const newOccupiedEnd = addMinutes(bookingWindow.endTimeUtc, eventType.bufferMinutes);
-    const conflictingBooking = conflictingBookings.find(
-      (booking) =>
-        booking.startTimeUtc < newOccupiedEnd &&
-        addMinutes(booking.endTimeUtc, booking.eventType.bufferMinutes) > bookingWindow.startTimeUtc,
-    );
-
-    if (conflictingBooking) {
-      throw createHttpError(409, 'That time has just been booked. Please pick another slot.');
-    }
 
     return tx.booking.create({
       data: {
@@ -472,6 +560,11 @@ async function getPublicBookingConfirmation(bookingId, attendeeEmail) {
   return serializeBooking(booking);
 }
 
+async function getPublicManageBooking(bookingId, token) {
+  const booking = await getBookingByManageTokenOrThrow(bookingId, token, bookingInclude);
+  return serializeBooking(booking);
+}
+
 async function listBookings(view) {
   const admin = await getAdminUserOrThrow();
   const now = new Date();
@@ -511,46 +604,170 @@ async function listBookings(view) {
   return bookings.map(serializeBooking);
 }
 
-async function cancelBooking(id) {
-  const admin = await getAdminUserOrThrow();
-  const existingBooking = await prisma.booking.findFirst({
-    where: {
-      id,
-      userId: admin.id,
-    },
-    include: bookingInclude,
+async function getBooking(id) {
+  const booking = await getBookingByAdminOrThrow(id, bookingInclude);
+  return serializeBooking(booking);
+}
+
+async function getBookingRescheduleSlots(id, dateString, viewerTimeZone) {
+  const booking = await getBookingByAdminOrThrow(id, bookingManageInclude);
+  assertBookingCanBeManaged(booking);
+
+  return getSlotPayloadForEventType({
+    eventType: booking.eventType,
+    userId: booking.userId,
+    dateString,
+    viewerTimeZone,
+    excludeBookingId: booking.id,
+  });
+}
+
+async function getPublicRescheduleSlots(id, token, dateString, viewerTimeZone) {
+  const booking = await getBookingByManageTokenOrThrow(id, token, bookingManageInclude);
+  assertBookingCanBeManaged(booking);
+
+  return getSlotPayloadForEventType({
+    eventType: booking.eventType,
+    userId: booking.userId,
+    dateString,
+    viewerTimeZone,
+    excludeBookingId: booking.id,
+  });
+}
+
+async function rescheduleExistingBooking(booking, payload, initiatedBy) {
+  assertBookingCanBeManaged(booking);
+
+  const bookingWindow = buildBookingWindow(booking.eventType, payload.date, payload.time);
+
+  if (booking.startTimeUtc.getTime() === bookingWindow.startTimeUtc.getTime()) {
+    throw createHttpError(400, 'Please choose a different time for the reschedule.');
+  }
+
+  const previousBooking = serializeBooking(booking);
+
+  const updatedBooking = await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(${booking.userId})`;
+
+    await ensureNoConflict(tx, {
+      userId: booking.userId,
+      bookingWindow,
+      eventType: booking.eventType,
+      excludeBookingId: booking.id,
+    });
+
+    return tx.booking.update({
+      where: {
+        id: booking.id,
+      },
+      data: {
+        attendeeTimezone: payload.attendeeTimezone ?? booking.attendeeTimezone,
+        startTimeUtc: bookingWindow.startTimeUtc,
+        endTimeUtc: bookingWindow.endTimeUtc,
+        previousStartTimeUtc: booking.startTimeUtc,
+        previousEndTimeUtc: booking.endTimeUtc,
+        rescheduledAt: new Date(),
+        rescheduleReason: payload.reason ?? null,
+        status: 'scheduled',
+        cancelledAt: null,
+      },
+      include: bookingInclude,
+    });
   });
 
-  if (!existingBooking) {
-    throw createHttpError(404, 'Booking not found.');
-  }
+  const serializedBooking = serializeBooking(updatedBooking);
+  void sendBookingRescheduledEmails({
+    booking: serializedBooking,
+    previousBooking,
+    initiatedBy,
+    reason: payload.reason,
+  });
 
-  if (existingBooking.status === 'cancelled') {
-    return serializeBooking(existingBooking);
-  }
+  return serializedBooking;
+}
 
-  const booking = await prisma.booking.update({
+async function rescheduleBookingByAdmin(id, payload) {
+  const booking = await getBookingByAdminOrThrow(id, bookingManageInclude);
+  return rescheduleExistingBooking(booking, payload, 'admin');
+}
+
+async function rescheduleBookingByGuest(id, token, payload) {
+  const booking = await getBookingByManageTokenOrThrow(id, token, bookingManageInclude);
+  return rescheduleExistingBooking(booking, payload, 'guest');
+}
+
+async function markBookingCancelled(booking, reason, notificationMode) {
+  const updatedBooking = await prisma.booking.update({
     where: {
-      id,
+      id: booking.id,
     },
     data: {
       status: 'cancelled',
       cancelledAt: new Date(),
+      rescheduleReason: notificationMode === 'request_reschedule' ? reason ?? null : booking.rescheduleReason,
     },
     include: bookingInclude,
   });
 
-  const serializedBooking = serializeBooking(booking);
-  void sendBookingCancelledEmails(serializedBooking);
+  const serializedBooking = serializeBooking(updatedBooking);
+
+  if (notificationMode === 'request_reschedule') {
+    void sendBookingRequestedRescheduleEmails({
+      booking: serializedBooking,
+      reason,
+      rebookPath: `/${serializedBooking.organizerUsername}/${serializedBooking.eventType.slug}`,
+    });
+  } else {
+    void sendBookingCancelledEmails(serializedBooking, reason);
+  }
+
   return serializedBooking;
+}
+
+async function cancelBooking(id, reason) {
+  const booking = await getBookingByAdminOrThrow(id, bookingInclude);
+
+  if (booking.status === 'cancelled') {
+    return serializeBooking(booking);
+  }
+
+  return markBookingCancelled(booking, reason, 'cancel');
+}
+
+async function cancelBookingByGuest(id, token, payload) {
+  const booking = await getBookingByManageTokenOrThrow(id, token, bookingInclude);
+
+  if (booking.status === 'cancelled') {
+    return serializeBooking(booking);
+  }
+
+  return markBookingCancelled(booking, payload.reason, 'cancel');
+}
+
+async function requestRescheduleBooking(id, payload) {
+  const booking = await getBookingByAdminOrThrow(id, bookingInclude);
+
+  if (booking.status === 'cancelled') {
+    return serializeBooking(booking);
+  }
+
+  return markBookingCancelled(booking, payload.reason, 'request_reschedule');
 }
 
 module.exports = {
   cancelBooking,
+  cancelBookingByGuest,
   createPublicBooking,
   getAvailableSlots,
+  getBooking,
+  getBookingRescheduleSlots,
   getPublicBookingConfirmation,
-  getPublicProfile,
   getPublicEventType,
+  getPublicManageBooking,
+  getPublicProfile,
+  getPublicRescheduleSlots,
   listBookings,
+  requestRescheduleBooking,
+  rescheduleBookingByAdmin,
+  rescheduleBookingByGuest,
 };

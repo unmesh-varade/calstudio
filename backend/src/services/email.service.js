@@ -178,7 +178,121 @@ async function sendBookingCancelledEmails(booking) {
   logEmailFailures(results);
 }
 
+async function sendBookingRescheduledEmails({ booking, previousBooking, initiatedBy, reason }) {
+  const title = booking.eventType.title;
+  const previousTimeLabel = previousBooking.localStart.label;
+  const updatedTimeLabel = booking.localStart.label;
+  const initiatorLabel = initiatedBy === 'admin' ? 'the organizer' : booking.attendeeName;
+  const reasonBlockText = reason ? ['', `Reason: ${reason}`] : [];
+  const reasonBlockHtml = reason
+    ? `<p><strong>Reason:</strong> ${escapeHtml(reason)}</p>`
+    : '';
+  const attendeeText = [
+    `Hi ${booking.attendeeName},`,
+    '',
+    `Your ${title} has been rescheduled by ${initiatorLabel}.`,
+    `Previous time: ${previousTimeLabel}`,
+    `New time: ${updatedTimeLabel}`,
+    ...reasonBlockText,
+  ].join('\n');
+  const organizerText = [
+    `${title} has been rescheduled.`,
+    '',
+    `Attendee: ${booking.attendeeName} <${booking.attendeeEmail}>`,
+    `Previous time: ${previousTimeLabel}`,
+    `New time: ${updatedTimeLabel}`,
+    ...reasonBlockText,
+  ].join('\n');
+
+  const results = await Promise.allSettled([
+    deliverEmail({
+      to: booking.attendeeEmail,
+      subject: `Booking rescheduled: ${title}`,
+      text: attendeeText,
+      html: `
+        <p>Hi ${escapeHtml(booking.attendeeName)},</p>
+        <p>Your <strong>${escapeHtml(title)}</strong> has been rescheduled by ${escapeHtml(
+          initiatorLabel,
+        )}.</p>
+        <p><strong>Previous time:</strong> ${escapeHtml(previousTimeLabel)}</p>
+        <p><strong>New time:</strong> ${escapeHtml(updatedTimeLabel)}</p>
+        ${reasonBlockHtml}
+      `,
+    }),
+    deliverEmail({
+      to: booking.eventType.organizer.email,
+      subject: `Booking rescheduled: ${title}`,
+      text: organizerText,
+      html: `
+        <p><strong>${escapeHtml(title)}</strong> has been rescheduled.</p>
+        <p>Attendee: ${escapeHtml(booking.attendeeName)} (${escapeHtml(booking.attendeeEmail)})</p>
+        <p><strong>Previous time:</strong> ${escapeHtml(previousTimeLabel)}</p>
+        <p><strong>New time:</strong> ${escapeHtml(updatedTimeLabel)}</p>
+        ${reasonBlockHtml}
+      `,
+    }),
+  ]);
+
+  logEmailFailures(results);
+}
+
+async function sendBookingRequestedRescheduleEmails({ booking, reason, rebookPath }) {
+  const title = booking.eventType.title;
+  const timeLabel = booking.localStart.label;
+  const reasonBlockText = reason ? ['', `Reason: ${reason}`] : [];
+  const reasonBlockHtml = reason
+    ? `<p><strong>Reason:</strong> ${escapeHtml(reason)}</p>`
+    : '';
+  const attendeeText = [
+    `Hi ${booking.attendeeName},`,
+    '',
+    `Your ${title} scheduled for ${timeLabel} needs to be rescheduled.`,
+    `Please book a new slot here: ${rebookPath}`,
+    ...reasonBlockText,
+  ].join('\n');
+  const organizerText = [
+    `${title} was marked for rebooking.`,
+    '',
+    `Attendee: ${booking.attendeeName} <${booking.attendeeEmail}>`,
+    `Cancelled time: ${timeLabel}`,
+    `Rebook link: ${rebookPath}`,
+    ...reasonBlockText,
+  ].join('\n');
+
+  const results = await Promise.allSettled([
+    deliverEmail({
+      to: booking.attendeeEmail,
+      subject: `Please reschedule: ${title}`,
+      text: attendeeText,
+      html: `
+        <p>Hi ${escapeHtml(booking.attendeeName)},</p>
+        <p>Your <strong>${escapeHtml(title)}</strong> scheduled for <strong>${escapeHtml(
+          timeLabel,
+        )}</strong> needs to be rescheduled.</p>
+        <p>Please book a new slot here: <strong>${escapeHtml(rebookPath)}</strong></p>
+        ${reasonBlockHtml}
+      `,
+    }),
+    deliverEmail({
+      to: booking.eventType.organizer.email,
+      subject: `Reschedule requested: ${title}`,
+      text: organizerText,
+      html: `
+        <p><strong>${escapeHtml(title)}</strong> was marked for rebooking.</p>
+        <p>Attendee: ${escapeHtml(booking.attendeeName)} (${escapeHtml(booking.attendeeEmail)})</p>
+        <p><strong>Cancelled time:</strong> ${escapeHtml(timeLabel)}</p>
+        <p><strong>Rebook link:</strong> ${escapeHtml(rebookPath)}</p>
+        ${reasonBlockHtml}
+      `,
+    }),
+  ]);
+
+  logEmailFailures(results);
+}
+
 module.exports = {
   sendBookingCancelledEmails,
   sendBookingCreatedEmails,
+  sendBookingRequestedRescheduleEmails,
+  sendBookingRescheduledEmails,
 };

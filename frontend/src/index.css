@@ -938,6 +938,10 @@ h3 {
   margin-top: 12px;
 }
 
+.confirmation-card--danger {
+  margin-top: 12px;
+}
+
 .confirmation-highlight {
   display: flex;
   flex-wrap: wrap;
@@ -946,6 +950,15 @@ h3 {
   border-radius: 18px;
   background: rgba(232, 245, 236, 0.72);
   color: var(--success);
+}
+
+.confirmation-highlight--warning {
+  background: rgba(254, 242, 242, 0.8);
+  color: #991b1b;
+}
+
+.confirmation-icon--warning {
+  background: #991b1b;
 }
 
 .confirmation-actions,
@@ -994,13 +1007,23 @@ h3 {
 
 .booking-card__actions {
   width: 170px;
-  display: flex;
+  display: grid;
+  gap: 10px;
   justify-content: flex-end;
 }
 
 .booking-card__action-button {
   width: 100%;
   align-self: start;
+}
+
+.booking-summary__stack {
+  display: grid;
+  gap: 12px;
+}
+
+.booking-selection--muted {
+  background: rgba(241, 245, 249, 0.82);
 }
 
 .booking-card__footer {

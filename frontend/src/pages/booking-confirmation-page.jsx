@@ -16,6 +16,9 @@ export function BookingConfirmationPage() {
     enabled: Boolean(bookingId && email),
   })
 
+  const manageToken = bookingQuery.data?.manageToken
+  const isCancelled = bookingQuery.data?.status === 'cancelled'
+
   return (
     <section className="confirmation-shell">
       <QueryState
@@ -33,8 +36,12 @@ export function BookingConfirmationPage() {
           <div className="confirmation-icon">
             <CheckCircle2 size={28} />
           </div>
-          <h1>This meeting is scheduled</h1>
-          <p>Your booking is confirmed and the saved details are shown below.</p>
+          <h1>{isCancelled ? 'This meeting is cancelled' : 'This meeting is scheduled'}</h1>
+          <p>
+            {isCancelled
+              ? 'The booking is now marked as cancelled and the latest details are shown below.'
+              : 'Your booking is confirmed and the saved details are shown below.'}
+          </p>
 
           <div className="confirmation-highlight">
             <span>
@@ -65,7 +72,9 @@ export function BookingConfirmationPage() {
             </strong>
 
             <span>Status</span>
-            <strong className="status-pill status-pill--success">{bookingQuery.data?.status}</strong>
+            <strong className={isCancelled ? 'status-pill' : 'status-pill status-pill--success'}>
+              {bookingQuery.data?.status}
+            </strong>
 
             <span>Event link</span>
             <strong>
@@ -91,6 +100,22 @@ export function BookingConfirmationPage() {
             <Link className="button button--ghost" to={`/${bookingQuery.data?.organizerUsername || ''}`}>
               Back to public page
             </Link>
+            {!isCancelled && manageToken ? (
+              <>
+                <Link
+                  className="button button--ghost"
+                  to={`/booking/${bookingQuery.data?.id}/reschedule?token=${encodeURIComponent(manageToken)}`}
+                >
+                  Reschedule
+                </Link>
+                <Link
+                  className="button button--ghost button--danger"
+                  to={`/booking/${bookingQuery.data?.id}/cancel?token=${encodeURIComponent(manageToken)}`}
+                >
+                  Cancel
+                </Link>
+              </>
+            ) : null}
             <Link
               className="button button--primary"
               to={`/${bookingQuery.data?.organizerUsername || ''}/${bookingQuery.data?.eventType.slug || ''}`}
