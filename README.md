@@ -8,8 +8,7 @@ Cal Studio allows an organizer to define availability, create event types, share
 
 ## Live Demo
 
-* Frontend: https://your-deployment-url
-* Backend API: https://your-backend-url/api
+* https://calstudio.vercel.app/
 
 ---
 
