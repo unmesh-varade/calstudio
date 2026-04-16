@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { AlertTriangle } from 'lucide-react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { BackButton } from '../components/back-button'
 import { QueryState } from '../components/query-state'
 import { api } from '../lib/api'
 import { formatDateTime } from '../lib/utils'
@@ -26,6 +27,8 @@ export function PublicBookingCancelPage() {
 
   return (
     <section className="confirmation-shell">
+      <BackButton fallbackTo={`/booking/${bookingId}?email=${encodeURIComponent(bookingQuery.data?.attendeeEmail || '')}`} />
+
       <QueryState
         isLoading={bookingQuery.isLoading}
         error={bookingQuery.error}

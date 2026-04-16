@@ -1,0 +1,77 @@
+@media (max-width: 1100px) {
+  .feature-grid,
+  .list-grid,
+  .booking-shell,
+  .hero-panel,
+  .dashboard-shell,
+  .page-heading,
+  .availability-day,
+  .availability-time-grid,
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-sidebar {
+    position: static;
+    min-height: auto;
+  }
+
+  .booking-summary {
+    position: static;
+  }
+
+  .sidebar-actions {
+    margin-top: 0;
+  }
+
+  .booking-card--split {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-card__actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .booking-card__action-button {
+    width: auto;
+  }
+}
+
+@media (max-width: 720px) {
+  .site-shell,
+  .dashboard-shell {
+    padding: 12px;
+  }
+
+  .site-header,
+  .hero-panel,
+  .dashboard-main,
+  .dashboard-sidebar {
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .site-header,
+  .header-actions,
+  .hero-actions,
+  .page-heading,
+  .list-card__header {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+
+  .preview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .confirmation-grid,
+  .date-list--calendar {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar-actions .button {
+    width: 100%;
+  }
+}

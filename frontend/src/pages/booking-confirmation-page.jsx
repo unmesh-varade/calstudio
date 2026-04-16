@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { CheckCircle2, Clock3, Globe2 } from 'lucide-react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { BookingAnswerList } from '../components/booking/booking-answer-list'
+import { BackButton } from '../components/back-button'
 import { QueryState } from '../components/query-state'
 import { api } from '../lib/api'
 import { formatDateTime } from '../lib/utils'
@@ -22,6 +23,8 @@ export function BookingConfirmationPage() {
 
   return (
     <section className="confirmation-shell">
+      <BackButton fallbackTo={`/${bookingQuery.data?.organizerUsername || ''}`} />
+
       <QueryState
         isLoading={bookingQuery.isLoading}
         error={bookingQuery.error}

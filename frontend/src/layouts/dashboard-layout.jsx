@@ -22,7 +22,7 @@ export function DashboardLayout() {
   return (
     <div className="dashboard-shell">
       <aside className="dashboard-sidebar">
-        <AppLogo to="/dashboard/event-types" />
+        <AppLogo />
         <div className="sidebar-copy">
           <p className="eyebrow">Single admin workspace</p>
           <h1>Scheduling dashboard</h1>

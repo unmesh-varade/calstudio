@@ -1,0 +1,323 @@
+.booking-shell {
+  grid-template-columns: 0.95fr 0.8fr 0.85fr;
+}
+
+.booking-shell--enhanced {
+  align-items: start;
+}
+
+.booking-panel {
+  align-content: start;
+}
+
+.booking-panel__heading {
+  display: grid;
+  gap: 6px;
+}
+
+.booking-summary {
+  position: sticky;
+  top: 24px;
+}
+
+.booking-summary__avatar {
+  width: 52px;
+  height: 52px;
+  font-size: 1rem;
+}
+
+.booking-summary__meta {
+  display: grid;
+  gap: 10px;
+  color: var(--text-muted);
+}
+
+.booking-summary__meta span,
+.confirmation-highlight span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.booking-selection {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: rgba(248, 250, 252, 0.72);
+}
+
+.booking-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.booking-form__header {
+  display: grid;
+  gap: 6px;
+}
+
+.date-list,
+.slot-list {
+  display: grid;
+  gap: 10px;
+}
+
+.date-list--calendar {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.calendar-shell {
+  display: grid;
+  place-items: center;
+  padding-top: 6px;
+}
+
+.booking-calendar {
+  width: 100%;
+}
+
+.booking-calendar .rdp-root {
+  --rdp-accent-color: #111827;
+  --rdp-accent-background-color: #111827;
+  --rdp-day_button-border-radius: 14px;
+  --rdp-day-height: 56px;
+  --rdp-day-width: 56px;
+  --rdp-disabled-opacity: 0.28;
+  --rdp-outside-opacity: 0.4;
+  margin: 0;
+}
+
+.booking-calendar .rdp-month {
+  width: 100%;
+}
+
+.booking-calendar .rdp-months {
+  justify-content: center;
+}
+
+.booking-calendar .rdp-month_caption {
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 18px;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.booking-calendar .rdp-caption_label {
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+}
+
+.booking-calendar .rdp-nav {
+  gap: 8px;
+}
+
+.booking-calendar .rdp-button_previous,
+.booking-calendar .rdp-button_next {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(248, 250, 252, 0.9);
+  color: var(--text);
+  width: 34px;
+  height: 34px;
+}
+
+.booking-calendar .rdp-button_previous:hover,
+.booking-calendar .rdp-button_next:hover {
+  background: white;
+  border-color: rgba(17, 24, 39, 0.16);
+}
+
+.booking-calendar .rdp-weekday {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding-bottom: 10px;
+}
+
+.booking-calendar .rdp-day {
+  padding: 4px;
+}
+
+.booking-calendar .rdp-day_button {
+  border: 1px solid rgba(15, 23, 42, 0.04);
+  background: rgba(248, 250, 252, 0.86);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.booking-calendar .rdp-day_button:hover {
+  border-color: rgba(17, 24, 39, 0.12);
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.booking-calendar .rdp-chevron {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+}
+
+.booking-calendar .rdp-selected .rdp-day_button {
+  background: #111827;
+  color: white;
+  border-color: #111827;
+}
+
+.booking-calendar .rdp-today:not(.rdp-selected) .rdp-day_button {
+  border-color: rgba(17, 24, 39, 0.16);
+}
+
+.slot-list--dense {
+  max-height: 330px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.date-chip,
+.slot-button {
+  border-radius: 14px;
+  padding: 12px 14px;
+  text-align: left;
+}
+
+.slot-button--active {
+  background: #111827;
+  color: white;
+  border-color: #111827;
+}
+
+.booking-empty {
+  margin-top: 18px;
+}
+
+.center-panel {
+  width: min(720px, 100%);
+  margin: 60px auto;
+}
+
+.confirmation-card {
+  width: min(560px, 100%);
+  margin: 32px auto 0;
+  padding: 28px;
+  border-radius: 28px;
+  display: grid;
+  gap: 20px;
+}
+
+.confirmation-grid {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 14px 20px;
+  padding: 20px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.confirmation-grid span {
+  color: var(--text-muted);
+}
+
+.confirmation-card--success {
+  margin-top: 12px;
+}
+
+.confirmation-card--danger {
+  margin-top: 12px;
+}
+
+.confirmation-highlight {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(232, 245, 236, 0.72);
+  color: var(--success);
+}
+
+.confirmation-highlight--warning {
+  background: rgba(254, 242, 242, 0.8);
+  color: #991b1b;
+}
+
+.confirmation-icon--warning {
+  background: #991b1b;
+}
+
+.confirmation-actions,
+.booking-card__footer {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.booking-list {
+  display: grid;
+  gap: 20px;
+}
+
+.booking-card {
+  gap: 18px;
+}
+
+.booking-card--split {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 24px;
+}
+
+.booking-card__main,
+.booking-card__identity,
+.booking-card__answers {
+  display: grid;
+  gap: 14px;
+}
+
+.booking-card__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.booking-card__title-row {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.booking-card__meta {
+  gap: 10px;
+}
+
+.booking-card__actions {
+  width: 170px;
+  display: grid;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.booking-card__action-button {
+  width: 100%;
+  align-self: start;
+}
+
+.booking-summary__stack {
+  display: grid;
+  gap: 12px;
+}
+
+.booking-selection--muted {
+  background: rgba(241, 245, 249, 0.82);
+}
+
+.booking-card__footer {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}

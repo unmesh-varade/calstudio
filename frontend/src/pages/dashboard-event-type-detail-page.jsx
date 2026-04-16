@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ButtonLink } from '../components/button-link'
+import { BackButton } from '../components/back-button'
 import { QueryState } from '../components/query-state'
 import { EventTypeForm } from '../features/event-types/event-type-form'
 import { api } from '../lib/api'
@@ -51,15 +51,14 @@ export function DashboardEventTypeDetailPage() {
 
   return (
     <section className="page-stack">
+      <BackButton fallbackTo="/dashboard/event-types" />
+
       <div className="page-heading">
         <div>
           <p className="eyebrow">Event type detail</p>
           <h2>{eventType?.title || 'Loading event type'}</h2>
           <p>Update the shareable slug, timing, custom questions, and booking status from one form.</p>
         </div>
-        <ButtonLink to="/dashboard/event-types" variant="ghost">
-          Back to list
-        </ButtonLink>
       </div>
 
       <QueryState

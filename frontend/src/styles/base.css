@@ -1,0 +1,354 @@
+:root {
+  font-family:
+    "Satoshi", "Avenir Next", "Segoe UI", sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #111827;
+  background:
+    radial-gradient(circle at top left, rgba(240, 244, 248, 0.9), transparent 28%),
+    linear-gradient(180deg, #f7f8fa 0%, #eef1f4 100%);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  --surface: rgba(255, 255, 255, 0.86);
+  --border: rgba(15, 23, 42, 0.08);
+  --text: #111827;
+  --text-muted: #667085;
+  --text-soft: #94a3b8;
+  --success: #166534;
+  --shadow-md: 0 14px 32px rgba(15, 23, 42, 0.07);
+  --shadow-sm: 0 8px 24px rgba(15, 23, 42, 0.05);
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+button,
+a,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.header-actions,
+.hero-actions,
+.segmented-control,
+.meta-row,
+.card-title-row,
+.detail-row,
+.brand-mark,
+.inline-link {
+  display: flex;
+  align-items: center;
+}
+
+.header-actions,
+.hero-actions {
+  gap: 12px;
+}
+
+.brand-mark {
+  gap: 12px;
+}
+
+.brand-mark__badge {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #111827 0%, #334155 100%);
+  color: white;
+  display: grid;
+  place-items: center;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.brand-mark strong,
+.brand-mark small {
+  display: block;
+}
+
+.brand-mark small,
+p,
+.eyebrow {
+  color: var(--text-muted);
+}
+
+.brand-mark small {
+  font-size: 0.8rem;
+}
+
+.button {
+  border-radius: 14px;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.button:hover,
+.slot-button:hover,
+.date-chip:hover,
+.segment:hover,
+.sidebar-link:hover {
+  transform: translateY(-1px);
+}
+
+.button--primary {
+  background: #111827;
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.button--ghost {
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.button--danger {
+  color: #991b1b;
+  border-color: rgba(153, 27, 27, 0.18);
+}
+
+.marketing-stack,
+.page-stack {
+  display: grid;
+  gap: 24px;
+}
+
+.hero-panel,
+.dashboard-sidebar,
+.dashboard-main,
+.booking-panel,
+.list-card,
+.feature-card,
+.detail-card,
+.center-panel,
+.empty-state {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  backdrop-filter: blur(18px);
+  box-shadow: var(--shadow-md);
+}
+
+.hero-copy,
+.hero-preview,
+.sidebar-copy,
+.page-heading,
+.list-card,
+.feature-card,
+.booking-panel,
+.detail-card,
+.center-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.eyebrow {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.73rem;
+  font-weight: 700;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: clamp(2.8rem, 5vw, 4.9rem);
+  line-height: 0.94;
+  letter-spacing: -0.05em;
+}
+
+h2 {
+  font-size: 2rem;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+h3 {
+  font-size: 1.1rem;
+  line-height: 1.1;
+}
+
+.preview-pill,
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  width: fit-content;
+}
+
+.preview-pill {
+  background: #111827;
+  color: white;
+}
+
+.status-pill {
+  background: #eef2f7;
+  color: var(--text-muted);
+}
+
+.status-pill--success {
+  background: #e8f5ec;
+  color: var(--success);
+}
+
+.stack-text {
+  display: grid;
+  gap: 4px;
+}
+
+.feature-grid,
+.list-grid,
+.booking-shell {
+  display: grid;
+  gap: 20px;
+}
+
+.list-card,
+.detail-card,
+.booking-panel,
+.center-panel,
+.empty-state {
+  padding: 24px;
+  border-radius: 24px;
+}
+
+.list-card__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.meta-row {
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 0.92rem;
+}
+
+.meta-column {
+  display: grid;
+  gap: 8px;
+  font-size: 0.95rem;
+}
+
+.preview-metric small,
+.meta-row,
+.meta-column {
+  color: var(--text-soft);
+}
+
+.inline-link {
+  gap: 8px;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.detail-row {
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.segmented-control {
+  gap: 8px;
+  padding: 4px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.segment,
+.date-chip,
+.slot-button {
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.75);
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.segment {
+  border-radius: 12px;
+  padding: 9px 12px;
+  text-transform: capitalize;
+}
+
+.segment--active,
+.date-chip--active {
+  background: #111827;
+  color: white;
+  border-color: #111827;
+}
+
+.back-button {
+  width: fit-content;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.back-button:hover {
+  color: #0f172a;
+}
+
+.empty-state--error {
+  color: #991b1b;
+}

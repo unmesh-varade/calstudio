@@ -2,11 +2,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Clock3, Globe2, UserRound } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { BackButton } from '../components/back-button'
 import { BookingDatePickerPanel } from '../components/booking/booking-date-picker-panel'
 import { BookingSlotListPanel } from '../components/booking/booking-slot-list-panel'
 import { BookingSummaryPanel } from '../components/booking/booking-summary-panel'
 import { BookingTimezoneSelect } from '../components/booking/booking-timezone-select'
-import { ButtonLink } from '../components/button-link'
 import { QueryState } from '../components/query-state'
 import { useBookingDateSelection } from '../hooks/use-booking-date-selection'
 import { api } from '../lib/api'
@@ -84,15 +84,14 @@ export function DashboardBookingReschedulePage() {
 
   return (
     <section className="page-stack">
+      <BackButton fallbackTo="/dashboard/bookings" />
+
       <div className="page-heading">
         <div>
           <p className="eyebrow">Booking update</p>
           <h2>Reschedule booking</h2>
           <p>Pick a new time using the same availability rules guests see on the public booking page.</p>
         </div>
-        <ButtonLink to="/dashboard/bookings" variant="ghost">
-          Back to bookings
-        </ButtonLink>
       </div>
 
       <QueryState

@@ -2,6 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { Clock3, Globe2, UserRound } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { BackButton } from '../components/back-button'
 import { BookingDatePickerPanel } from '../components/booking/booking-date-picker-panel'
 import { BookingSlotListPanel } from '../components/booking/booking-slot-list-panel'
 import { BookingSummaryPanel } from '../components/booking/booking-summary-panel'
@@ -81,14 +82,17 @@ export function PublicBookingReschedulePage() {
   }
 
   return (
-    <section className="booking-shell booking-shell--enhanced">
-      <QueryState
-        isLoading={bookingQuery.isLoading}
-        error={bookingQuery.error}
-        empty={(!token && 'Reschedule link is missing its booking token.') || (!bookingQuery.data && 'Booking not found.')}
-      >
-        {bookingQuery.data ? (
-          <>
+    <section className="page-stack">
+      <BackButton fallbackTo={`/booking/${bookingId}?email=${encodeURIComponent(bookingQuery.data?.attendeeEmail || '')}`} />
+
+      <div className="booking-shell booking-shell--enhanced">
+        <QueryState
+          isLoading={bookingQuery.isLoading}
+          error={bookingQuery.error}
+          empty={(!token && 'Reschedule link is missing its booking token.') || (!bookingQuery.data && 'Booking not found.')}
+        >
+          {bookingQuery.data ? (
+            <>
             <BookingSummaryPanel
               avatar={
                 <div className="public-avatar booking-summary__avatar">
@@ -136,7 +140,7 @@ export function PublicBookingReschedulePage() {
               visibleMonth={visibleMonth}
             />
 
-            <div className="booking-panel booking-panel--booking">
+              <div className="booking-panel booking-panel--booking">
               <BookingSlotListPanel
                 emptyMessage="No alternative slots available for this date."
                 excludeStartTimeUtc={bookingQuery.data.startTimeUtc}
@@ -158,7 +162,7 @@ export function PublicBookingReschedulePage() {
                 timezoneLabel={`Times shown in ${viewerTimezone}`}
               />
 
-              <form className="booking-form" onSubmit={handleSubmit}>
+                <form className="booking-form" onSubmit={handleSubmit}>
                 <div className="booking-form__header">
                   <h3>Reschedule your meeting</h3>
                   <p>Choose a new slot and we will let the organizer know.</p>
@@ -189,19 +193,20 @@ export function PublicBookingReschedulePage() {
                   <div className="form-message form-message--error">{rescheduleMutation.error.message}</div>
                 ) : null}
 
-                <div className="confirmation-actions">
+                  <div className="confirmation-actions">
                   <Link className="button button--ghost" to={`/booking/${bookingQuery.data.id}?email=${encodeURIComponent(bookingQuery.data.attendeeEmail)}`}>
                     Back
                   </Link>
                   <button className="button button--primary" disabled={!selectedSlot || rescheduleMutation.isPending} type="submit">
                     {rescheduleMutation.isPending ? 'Rescheduling...' : 'Confirm reschedule'}
                   </button>
-                </div>
-              </form>
-            </div>
-          </>
-        ) : null}
-      </QueryState>
+                  </div>
+                </form>
+              </div>
+            </>
+          ) : null}
+        </QueryState>
+      </div>
     </section>
   )
 }
