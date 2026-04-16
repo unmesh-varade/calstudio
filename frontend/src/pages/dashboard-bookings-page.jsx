@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { BookingAnswerList } from '../components/booking/booking-answer-list'
 import { QueryState } from '../components/query-state'
 import { api } from '../lib/api'
 import { formatDateTime } from '../lib/utils'
@@ -137,19 +138,9 @@ export function DashboardBookingsPage() {
                   <span>{booking.attendeeTimezone || 'Timezone not shared'}</span>
                 </div>
 
-                {booking.answers?.length ? (
-                  <div className="confirmation-notes booking-card__answers">
-                    <h3>Booking answers</h3>
-                    <div className="confirmation-notes__list">
-                      {booking.answers.map((answer) => (
-                        <div className="confirmation-notes__item" key={answer.id}>
-                          <span>{answer.questionLabel}</span>
-                          <strong>{answer.value}</strong>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
+                <div className="booking-card__answers">
+                  <BookingAnswerList answers={booking.answers} title="Booking answers" />
+                </div>
 
                 <div className="booking-card__footer">
                   <span>Event slug: {booking.eventType.slug}</span>

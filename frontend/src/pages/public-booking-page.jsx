@@ -1,18 +1,16 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { ChevronLeft, ChevronRight, Clock3, Globe2, UserRound } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
-import { DayPicker } from 'react-day-picker'
+import { Clock3, Globe2, UserRound } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { BookingDatePickerPanel } from '../components/booking/booking-date-picker-panel'
+import { BookingQuestionFields, buildAnswerState } from '../components/booking/booking-question-fields'
+import { BookingSlotListPanel } from '../components/booking/booking-slot-list-panel'
+import { BookingSummaryPanel } from '../components/booking/booking-summary-panel'
+import { BookingTimezoneSelect } from '../components/booking/booking-timezone-select'
 import { QueryState } from '../components/query-state'
+import { useBookingDateSelection } from '../hooks/use-booking-date-selection'
 import { api } from '../lib/api'
-import { timezoneOptions } from '../lib/timezones'
-import {
-  formatCalendarDateLabel,
-  formatDateTime,
-  getTomorrowCalendarDate,
-  normalizeCalendarDate,
-  toCalendarDateString,
-} from '../lib/utils'
+import { formatDateTime } from '../lib/utils'
 
 const defaultForm = {
   attendeeName: '',
@@ -21,22 +19,18 @@ const defaultForm = {
   answers: {},
 }
 
-function buildAnswerState(questions = []) {
-  return questions.reduce((accumulator, question) => {
-    accumulator[question.id] = ''
-    return accumulator
-  }, {})
-}
-
 export function PublicBookingPage() {
   const { username, slug } = useParams()
   const navigate = useNavigate()
-  const [selectedDate, setSelectedDate] = useState(getTomorrowCalendarDate)
-  const [visibleMonth, setVisibleMonth] = useState(getTomorrowCalendarDate)
   const [selectedSlot, setSelectedSlot] = useState(null)
   const [formValues, setFormValues] = useState(defaultForm)
-
-  const selectedDateString = useMemo(() => toCalendarDateString(selectedDate), [selectedDate])
+  const {
+    selectedDate,
+    selectedDateString,
+    visibleMonth,
+    handleMonthChange,
+    handleDateSelect,
+  } = useBookingDateSelection()
 
   const eventTypeQuery = useQuery({
     queryKey: ['public-event-type', username, slug],
@@ -98,6 +92,14 @@ export function PublicBookingPage() {
     }))
   }
 
+  function updateTimezone(nextTimezone) {
+    setSelectedSlot(null)
+    setFormValues((current) => ({
+      ...current,
+      attendeeTimezone: nextTimezone,
+    }))
+  }
+
   return (
     <section className="booking-shell booking-shell--enhanced">
       <QueryState
@@ -105,130 +107,72 @@ export function PublicBookingPage() {
         error={eventTypeQuery.error}
         empty={!eventTypeQuery.data && 'Event type not found.'}
       >
-        <div className="booking-panel booking-panel--summary booking-summary">
-          <div className="public-avatar booking-summary__avatar">
-            {eventTypeQuery.data?.organizer.username?.[0]?.toUpperCase() || 'C'}
-          </div>
-          <p className="eyebrow">{eventTypeQuery.data?.organizer.username}</p>
-          <h1>{eventTypeQuery.data?.title}</h1>
-          <p>{eventTypeQuery.data?.description}</p>
-          <div className="booking-summary__meta">
-            <span>
-              <Clock3 size={15} />
-              {eventTypeQuery.data?.durationMinutes} minute meeting
-            </span>
-            <span>
-              <Clock3 size={15} />
-              {eventTypeQuery.data?.bufferMinutes || 0} minute buffer
-            </span>
-            <span>
-              <Globe2 size={15} />
-              {eventTypeQuery.data?.timezone}
-            </span>
-            <span>
-              <UserRound size={15} />
-              Host: {eventTypeQuery.data?.organizer.name}
-            </span>
-          </div>
-          {selectedSlot ? (
-            <div className="booking-selection">
-              <strong>Selected</strong>
-              <span>
-                {formatDateTime(selectedSlot.startTimeUtc, formValues.attendeeTimezone || 'UTC')}
-              </span>
+        <BookingSummaryPanel
+          avatar={
+            <div className="public-avatar booking-summary__avatar">
+              {eventTypeQuery.data?.organizer.username?.[0]?.toUpperCase() || 'C'}
             </div>
-          ) : null}
-        </div>
+          }
+          description={eventTypeQuery.data?.description}
+          eyebrow={eventTypeQuery.data?.organizer.username}
+          meta={
+            <>
+              <span>
+                <Clock3 size={15} />
+                {eventTypeQuery.data?.durationMinutes} minute meeting
+              </span>
+              <span>
+                <Clock3 size={15} />
+                {eventTypeQuery.data?.bufferMinutes || 0} minute buffer
+              </span>
+              <span>
+                <Globe2 size={15} />
+                {eventTypeQuery.data?.timezone}
+              </span>
+              <span>
+                <UserRound size={15} />
+                Host: {eventTypeQuery.data?.organizer.name}
+              </span>
+            </>
+          }
+          selection={
+            selectedSlot ? (
+              <>
+                <strong>Selected</strong>
+                <span>
+                  {formatDateTime(selectedSlot.startTimeUtc, formValues.attendeeTimezone || 'UTC')}
+                </span>
+              </>
+            ) : null
+          }
+          title={eventTypeQuery.data?.title}
+        />
       </QueryState>
 
-      <div className="booking-panel booking-panel--calendar">
-        <div className="booking-panel__heading">
-          <p className="eyebrow">Choose a date</p>
-          <h2>Available days</h2>
-        </div>
-        <div className="calendar-shell">
-          <DayPicker
-            className="booking-calendar"
-            components={{
-              Chevron: ({ orientation, ...props }) =>
-                orientation === 'left' ? <ChevronLeft {...props} size={16} /> : <ChevronRight {...props} size={16} />,
-            }}
-            disabled={{ before: getTomorrowCalendarDate() }}
-            mode="single"
-            month={visibleMonth}
-            onMonthChange={(month) => {
-              setVisibleMonth(normalizeCalendarDate(month))
-              setSelectedSlot(null)
-            }}
-            onSelect={(date) => {
-              if (!date) {
-                return
-              }
-
-              const normalizedDate = normalizeCalendarDate(date)
-
-              setSelectedDate(normalizedDate)
-              setVisibleMonth(normalizedDate)
-              setSelectedSlot(null)
-            }}
-            selected={selectedDate}
-            showOutsideDays
-            weekStartsOn={0}
-          />
-        </div>
-      </div>
+      <BookingDatePickerPanel
+        onDateSelect={(date) => handleDateSelect(date, () => setSelectedSlot(null))}
+        onMonthChange={(month) => handleMonthChange(month, () => setSelectedSlot(null))}
+        selectedDate={selectedDate}
+        visibleMonth={visibleMonth}
+      />
 
       <div className="booking-panel booking-panel--booking">
-        <div className="booking-panel__heading">
-          <p className="eyebrow">Choose a time</p>
-          <h2>{formatCalendarDateLabel(selectedDateString)}</h2>
-          <p>Times shown in {formValues.attendeeTimezone || eventTypeQuery.data?.timezone || 'UTC'}</p>
-        </div>
-
-        <label className="field booking-timezone-field">
-          <span className="field__label">View slots in your timezone</span>
-          <select
-            className="field__control"
-            onChange={(event) => {
-              setSelectedSlot(null)
-              setFormValues((current) => ({
-                ...current,
-                attendeeTimezone: event.target.value,
-              }))
-            }}
-            required
-            value={formValues.attendeeTimezone}
-          >
-            {timezoneOptions.map((timeZone) => (
-              <option key={timeZone} value={timeZone}>
-                {timeZone}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <QueryState
-          isLoading={slotsQuery.isLoading}
-          error={slotsQuery.error}
-          empty={!slotsQuery.data?.slots?.length && 'No slots available for this date.'}
-        >
-          <div className="slot-list slot-list--dense">
-            {slotsQuery.data?.slots.map((slot) => (
-              <button
-                className={
-                  selectedSlot?.startTimeUtc === slot.startTimeUtc
-                    ? 'slot-button slot-button--active'
-                    : 'slot-button'
-                }
-                key={slot.startTimeUtc}
-                onClick={() => setSelectedSlot(slot)}
-                type="button"
-              >
-                {slot.label}
-              </button>
-            ))}
-          </div>
-        </QueryState>
+        <BookingSlotListPanel
+          emptyMessage="No slots available for this date."
+          headingDate={selectedDateString}
+          onSelectSlot={setSelectedSlot}
+          selectedSlot={selectedSlot}
+          slots={slotsQuery.data?.slots}
+          slotsQuery={slotsQuery}
+          timezoneField={
+            <BookingTimezoneSelect
+              label="View slots in your timezone"
+              onChange={(event) => updateTimezone(event.target.value)}
+              value={formValues.attendeeTimezone}
+            />
+          }
+          timezoneLabel={`Times shown in ${formValues.attendeeTimezone || eventTypeQuery.data?.timezone || 'UTC'}`}
+        />
 
         {selectedSlot ? (
           <form className="booking-form" onSubmit={handleFormSubmit}>
@@ -266,76 +210,17 @@ export function PublicBookingPage() {
               />
             </label>
 
-            <label className="field">
-              <span className="field__label">Your timezone</span>
-              <select
-                className="field__control"
-                onChange={(event) =>
-                  {
-                    setSelectedSlot(null)
-                    setFormValues((current) => ({
-                      ...current,
-                      attendeeTimezone: event.target.value,
-                    }))
-                  }
-                }
-                required
-                value={formValues.attendeeTimezone}
-              >
-                {timezoneOptions.map((timeZone) => (
-                  <option key={timeZone} value={timeZone}>
-                    {timeZone}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <BookingTimezoneSelect
+              label="Your timezone"
+              onChange={(event) => updateTimezone(event.target.value)}
+              value={formValues.attendeeTimezone}
+            />
 
-            {eventTypeQuery.data?.questions?.length ? (
-              <section className="booking-question-list">
-                <div className="section-heading section-heading--compact">
-                  <div>
-                    <span className="field__label">Additional booking questions</span>
-                    <p className="section-heading__copy">
-                      Share a little context so the host can prepare before the meeting.
-                    </p>
-                  </div>
-                </div>
-
-                {eventTypeQuery.data.questions.map((question) =>
-                  question.type === 'longText' ? (
-                    <label className="field" key={question.id}>
-                      <span className="field__label">
-                        {question.label}
-                        {question.isRequired ? ' *' : ''}
-                      </span>
-                      <textarea
-                        className="field__control field__control--textarea"
-                        onChange={(event) => updateAnswer(question.id, event.target.value)}
-                        placeholder={question.placeholder || 'Type your answer'}
-                        required={question.isRequired}
-                        rows={5}
-                        value={formValues.answers[question.id] || ''}
-                      />
-                    </label>
-                  ) : (
-                    <label className="field" key={question.id}>
-                      <span className="field__label">
-                        {question.label}
-                        {question.isRequired ? ' *' : ''}
-                      </span>
-                      <input
-                        className="field__control"
-                        onChange={(event) => updateAnswer(question.id, event.target.value)}
-                        placeholder={question.placeholder || 'Type your answer'}
-                        required={question.isRequired}
-                        type="text"
-                        value={formValues.answers[question.id] || ''}
-                      />
-                    </label>
-                  ),
-                )}
-              </section>
-            ) : null}
+            <BookingQuestionFields
+              answers={formValues.answers}
+              onChange={updateAnswer}
+              questions={eventTypeQuery.data?.questions || []}
+            />
 
             {bookingMutationError ? (
               <div className="form-message form-message--error">{bookingMutationError}</div>

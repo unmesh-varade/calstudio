@@ -1,18 +1,18 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { ChevronLeft, ChevronRight, Clock3, Globe2, UserRound } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
-import { DayPicker } from 'react-day-picker'
+import { Clock3, Globe2, UserRound } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { BookingDatePickerPanel } from '../components/booking/booking-date-picker-panel'
+import { BookingSlotListPanel } from '../components/booking/booking-slot-list-panel'
+import { BookingSummaryPanel } from '../components/booking/booking-summary-panel'
+import { BookingTimezoneSelect } from '../components/booking/booking-timezone-select'
 import { QueryState } from '../components/query-state'
+import { useBookingDateSelection } from '../hooks/use-booking-date-selection'
 import { api } from '../lib/api'
-import { timezoneOptions } from '../lib/timezones'
 import {
-  formatCalendarDateLabel,
   formatDateTime,
   getCalendarDateInTimeZone,
   getTomorrowCalendarDate,
-  normalizeCalendarDate,
-  toCalendarDateString,
 } from '../lib/utils'
 
 export function PublicBookingReschedulePage() {
@@ -21,10 +21,16 @@ export function PublicBookingReschedulePage() {
   const token = searchParams.get('token') || ''
   const navigate = useNavigate()
   const [viewerTimezone, setViewerTimezone] = useState('UTC')
-  const [selectedDate, setSelectedDate] = useState(getTomorrowCalendarDate)
-  const [visibleMonth, setVisibleMonth] = useState(getTomorrowCalendarDate)
   const [selectedSlot, setSelectedSlot] = useState(null)
   const [reason, setReason] = useState('')
+  const {
+    selectedDate,
+    selectedDateString,
+    visibleMonth,
+    handleMonthChange,
+    handleDateSelect,
+    syncDate,
+  } = useBookingDateSelection()
 
   const bookingQuery = useQuery({
     queryKey: ['public-manage-booking', bookingId, token],
@@ -42,13 +48,9 @@ export function PublicBookingReschedulePage() {
       getCalendarDateInTimeZone(bookingQuery.data.startTimeUtc, nextTimezone) || getTomorrowCalendarDate()
 
     setViewerTimezone(nextTimezone)
-    setSelectedDate(nextDate)
-    setVisibleMonth(nextDate)
-    setSelectedSlot(null)
+    syncDate(nextDate, () => setSelectedSlot(null))
     setReason('')
-  }, [bookingQuery.data])
-
-  const selectedDateString = useMemo(() => toCalendarDateString(selectedDate), [selectedDate])
+  }, [bookingQuery.data, syncDate])
 
   const slotsQuery = useQuery({
     queryKey: ['public-reschedule-slots', bookingId, token, selectedDateString, viewerTimezone],
@@ -87,125 +89,74 @@ export function PublicBookingReschedulePage() {
       >
         {bookingQuery.data ? (
           <>
-            <div className="booking-panel booking-panel--summary booking-summary">
-              <div className="public-avatar booking-summary__avatar">
-                {bookingQuery.data.organizerUsername?.[0]?.toUpperCase() || 'C'}
-              </div>
-              <p className="eyebrow">{bookingQuery.data.organizerUsername}</p>
-              <h1>{bookingQuery.data.eventType.title}</h1>
-              <div className="booking-summary__meta">
-                <span>
-                  <Clock3 size={15} />
-                  {bookingQuery.data.eventType.durationMinutes} minute meeting
-                </span>
-                <span>
-                  <Globe2 size={15} />
-                  Viewing in {viewerTimezone}
-                </span>
-                <span>
-                  <UserRound size={15} />
-                  Hosted by {bookingQuery.data.eventType.organizer.name}
-                </span>
-              </div>
-              <div className="booking-summary__stack">
-                <div className="booking-selection booking-selection--muted">
-                  <strong>Current time</strong>
-                  <span>{formatDateTime(bookingQuery.data.startTimeUtc, viewerTimezone)}</span>
+            <BookingSummaryPanel
+              avatar={
+                <div className="public-avatar booking-summary__avatar">
+                  {bookingQuery.data.organizerUsername?.[0]?.toUpperCase() || 'C'}
                 </div>
-                {selectedSlot ? (
-                  <div className="booking-selection">
-                    <strong>New time</strong>
-                    <span>{formatDateTime(selectedSlot.startTimeUtc, viewerTimezone)}</span>
+              }
+              eyebrow={bookingQuery.data.organizerUsername}
+              meta={
+                <>
+                  <span>
+                    <Clock3 size={15} />
+                    {bookingQuery.data.eventType.durationMinutes} minute meeting
+                  </span>
+                  <span>
+                    <Globe2 size={15} />
+                    Viewing in {viewerTimezone}
+                  </span>
+                  <span>
+                    <UserRound size={15} />
+                    Hosted by {bookingQuery.data.eventType.organizer.name}
+                  </span>
+                </>
+              }
+              stack={
+                <>
+                  <div className="booking-selection booking-selection--muted">
+                    <strong>Current time</strong>
+                    <span>{formatDateTime(bookingQuery.data.startTimeUtc, viewerTimezone)}</span>
                   </div>
-                ) : null}
-              </div>
-            </div>
+                  {selectedSlot ? (
+                    <div className="booking-selection">
+                      <strong>New time</strong>
+                      <span>{formatDateTime(selectedSlot.startTimeUtc, viewerTimezone)}</span>
+                    </div>
+                  ) : null}
+                </>
+              }
+              title={bookingQuery.data.eventType.title}
+            />
 
-            <div className="booking-panel booking-panel--calendar">
-              <div className="booking-panel__heading">
-                <p className="eyebrow">Choose a date</p>
-                <h2>Available days</h2>
-              </div>
-              <div className="calendar-shell">
-                <DayPicker
-                  className="booking-calendar"
-                  components={{
-                    Chevron: ({ orientation, ...props }) =>
-                      orientation === 'left' ? <ChevronLeft {...props} size={16} /> : <ChevronRight {...props} size={16} />,
-                  }}
-                  disabled={{ before: getTomorrowCalendarDate() }}
-                  mode="single"
-                  month={visibleMonth}
-                  onMonthChange={(month) => {
-                    setVisibleMonth(normalizeCalendarDate(month))
-                    setSelectedSlot(null)
-                  }}
-                  onSelect={(date) => {
-                    if (!date) {
-                      return
-                    }
-
-                    const normalizedDate = normalizeCalendarDate(date)
-                    setSelectedDate(normalizedDate)
-                    setVisibleMonth(normalizedDate)
-                    setSelectedSlot(null)
-                  }}
-                  selected={selectedDate}
-                  showOutsideDays
-                  weekStartsOn={0}
-                />
-              </div>
-            </div>
+            <BookingDatePickerPanel
+              onDateSelect={(date) => handleDateSelect(date, () => setSelectedSlot(null))}
+              onMonthChange={(month) => handleMonthChange(month, () => setSelectedSlot(null))}
+              selectedDate={selectedDate}
+              visibleMonth={visibleMonth}
+            />
 
             <div className="booking-panel booking-panel--booking">
-              <div className="booking-panel__heading">
-                <p className="eyebrow">Choose a time</p>
-                <h2>{formatCalendarDateLabel(selectedDateString)}</h2>
-                <p>Times shown in {viewerTimezone}</p>
-              </div>
-
-              <label className="field booking-timezone-field">
-                <span className="field__label">Your timezone</span>
-                <select
-                  className="field__control"
-                  onChange={(event) => {
-                    setSelectedSlot(null)
-                    setViewerTimezone(event.target.value)
-                  }}
-                  value={viewerTimezone}
-                >
-                  {timezoneOptions.map((timeZone) => (
-                    <option key={timeZone} value={timeZone}>
-                      {timeZone}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <QueryState
-                isLoading={slotsQuery.isLoading}
-                error={slotsQuery.error}
-                empty={!slotsQuery.data?.slots?.length && 'No alternative slots available for this date.'}
-              >
-                <div className="slot-list slot-list--dense">
-                  {slotsQuery.data?.slots.map((slot) => (
-                    slot.startTimeUtc !== bookingQuery.data.startTimeUtc ? (
-                      <button
-                        className={
-                          selectedSlot?.startTimeUtc === slot.startTimeUtc
-                            ? 'slot-button slot-button--active'
-                            : 'slot-button'
-                        }
-                        key={slot.startTimeUtc}
-                        onClick={() => setSelectedSlot(slot)}
-                        type="button"
-                      >
-                        {slot.label}
-                      </button>
-                    ) : null
-                  ))}
-                </div>
-              </QueryState>
+              <BookingSlotListPanel
+                emptyMessage="No alternative slots available for this date."
+                excludeStartTimeUtc={bookingQuery.data.startTimeUtc}
+                headingDate={selectedDateString}
+                onSelectSlot={setSelectedSlot}
+                selectedSlot={selectedSlot}
+                slots={slotsQuery.data?.slots}
+                slotsQuery={slotsQuery}
+                timezoneField={
+                  <BookingTimezoneSelect
+                    label="Your timezone"
+                    onChange={(event) => {
+                      setSelectedSlot(null)
+                      setViewerTimezone(event.target.value)
+                    }}
+                    value={viewerTimezone}
+                  />
+                }
+                timezoneLabel={`Times shown in ${viewerTimezone}`}
+              />
 
               <form className="booking-form" onSubmit={handleSubmit}>
                 <div className="booking-form__header">

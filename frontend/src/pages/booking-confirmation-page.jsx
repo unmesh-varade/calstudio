@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import { CheckCircle2, Clock3, Globe2, UserRound } from 'lucide-react'
+import { CheckCircle2, Clock3, Globe2 } from 'lucide-react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { BookingAnswerList } from '../components/booking/booking-answer-list'
 import { QueryState } from '../components/query-state'
 import { api } from '../lib/api'
 import { formatDateTime } from '../lib/utils'
@@ -82,19 +83,7 @@ export function BookingConfirmationPage() {
             </strong>
           </div>
 
-          {bookingQuery.data?.answers?.length ? (
-            <div className="confirmation-notes">
-              <h3>Booking notes</h3>
-              <div className="confirmation-notes__list">
-                {bookingQuery.data.answers.map((answer) => (
-                  <div className="confirmation-notes__item" key={answer.id}>
-                    <span>{answer.questionLabel}</span>
-                    <strong>{answer.value}</strong>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : null}
+          <BookingAnswerList answers={bookingQuery.data?.answers} title="Booking notes" />
 
           <div className="confirmation-actions">
             <Link className="button button--ghost" to={`/${bookingQuery.data?.organizerUsername || ''}`}>
