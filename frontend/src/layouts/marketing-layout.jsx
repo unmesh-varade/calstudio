@@ -9,7 +9,7 @@ export function MarketingLayout() {
         <AppLogo />
         <div className="header-actions">
           <ButtonLink to="/codemorty" variant="ghost">
-            Sample booking
+            Public Booking Page
           </ButtonLink>
           <ButtonLink to="/dashboard/event-types">Open dashboard</ButtonLink>
         </div>
