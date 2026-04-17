@@ -3,7 +3,7 @@ import { Link2, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ButtonLink } from '../components/button-link'
-import { QueryState } from '../components/query-state'
+import { QueryState, SkeletonLoader } from '../components/query-state'
 import { api } from '../lib/api'
 
 export function DashboardEventTypesPage() {
@@ -44,6 +44,7 @@ export function DashboardEventTypesPage() {
         isLoading={eventTypesQuery.isLoading}
         error={eventTypesQuery.error}
         empty={!eventTypesQuery.data?.length && 'No event types yet.'}
+        loadingFallback={<SkeletonLoader rows={4} variant="event-types" />}
       >
         <div className="event-type-list">
           {eventTypesQuery.data?.map((eventType) => (

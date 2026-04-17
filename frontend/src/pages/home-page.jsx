@@ -29,7 +29,7 @@ export function HomePage() {
     <div className="marketing-stack">
       <section className="hero-panel">
         <div className="hero-copy">
-          <p className="eyebrow">Cal.com-inspired scheduling platform</p>
+          <p className="eyebrow">CalStudio scheduling platform</p>
           <h1>Scheduling that feels polished, explainable, and ready to demo.</h1>
           <p className="hero-body">
             This MVP lets one default admin define availability, publish booking links, accept
