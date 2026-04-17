@@ -1,357 +1,305 @@
-# Cal Studio
+# CalStudio
 
-A Cal.com-inspired scheduling platform built as a single-admin full-stack application.
-
-Cal Studio allows an organizer to define availability, create event types, share booking links, and manage bookings through a streamlined dashboard. The system focuses on correct scheduling logic, timezone safety, and a clean booking experience.
+CalStudio is a full-stack scheduling and booking platform inspired by Cal.com, built for a single-admin workflow with public booking links, timezone-aware slot generation, booking management, and email notifications.
 
 ---
 
-## Live Demo
+## Live Demo Links
 
-* https://calstudio.vercel.app/
-
----
-
-## Overview
-
-This project replicates the core experience of modern scheduling tools such as Cal.com, with emphasis on:
-
-* deterministic slot generation
-* timezone-safe scheduling
-* conflict-free booking
-* clear and explainable architecture
-
----
-
-## Schema Design
-
-The database schema is centered around organizer availability, event configuration, bookings, custom intake questions, and booking lifecycle changes such as cancellation and rescheduling.
-
-### Entity Relationship Summary
-
-| Entity | Purpose | Key Fields | Relationships |
-|---|---|---|---|
-| `User` | Represents the organizer/admin in this MVP | `username`, `name`, `email`, `defaultTimezone` | Has many `AvailabilitySchedule`, `EventType`, `Booking` |
-| `AvailabilitySchedule` | Stores a named schedule and its timezone | `name`, `timezone`, `isDefault` | Belongs to `User`; has many `AvailabilityRule`, `EventType` |
-| `AvailabilityRule` | Defines weekly recurring availability windows | `weekday`, `startTime`, `endTime` | Belongs to `AvailabilitySchedule` |
-| `EventType` | Represents a public bookable meeting type | `title`, `slug`, `description`, `durationMinutes`, `bufferMinutes`, `isActive` | Belongs to `User` and `AvailabilitySchedule`; has many `Booking`, `EventTypeQuestion` |
-| `EventTypeQuestion` | Stores custom questions shown during booking | `label`, `type`, `placeholder`, `isRequired`, `sortOrder` | Belongs to `EventType`; has many `BookingAnswer` |
-| `Booking` | Stores a scheduled meeting between organizer and guest | `attendeeName`, `attendeeEmail`, `attendeeTimezone`, `startTimeUtc`, `endTimeUtc`, `status`, `cancelledAt` | Belongs to `User` and `EventType`; has many `BookingAnswer` |
-| `BookingAnswer` | Stores responses to booking questions | `questionLabel`, `questionType`, `value` | Belongs to `Booking`; optionally references `EventTypeQuestion` |
-
-### Booking Lifecycle Fields
-
-The `Booking` model also stores rescheduling/self-service management fields:
-
-| Field | Purpose |
+| Resource | Link |
 |---|---|
-| `manageToken` | Secure public manage link for reschedule/cancel actions |
-| `previousStartTimeUtc` | Stores the old slot start time after reschedule |
-| `previousEndTimeUtc` | Stores the old slot end time after reschedule |
-| `rescheduledAt` | Timestamp for when the booking was last rescheduled |
-| `rescheduleReason` | Optional reason entered during reschedule flow |
-
-### Enums
-
-| Enum | Values | Purpose |
-|---|---|---|
-| `BookingStatus` | `scheduled`, `cancelled` | Tracks booking lifecycle state |
-| `BookingQuestionType` | `shortText`, `longText` | Defines supported custom question types |
-
-### Relationship Notes
-
-- A `User` can own multiple schedules and event types.
-- An `AvailabilitySchedule` contains multiple weekly `AvailabilityRule` rows.
-- Each `EventType` is attached to exactly one schedule.
-- A `Booking` is created for one event type and one organizer.
-- `BookingAnswer` is stored separately so booking responses remain available in the dashboard.
-- `BookingAnswer` keeps question label/type data even if the original question changes later.
-
-### Design Decisions
-
-- Bookings are stored in UTC to keep scheduling deterministic across timezones.
-- Availability is authored in the schedule’s timezone.
-- Public attendees can view slots in their own selected timezone.
-- Buffer time is part of the event type, not the booking.
-- Custom questions are attached to event types, while answers are attached to bookings.
-- `manageToken` enables public self-service actions without requiring authentication.
+| Frontend | https://calstudio.vercel.app/ |
+| Backend API | Deployed Express API configured through `VITE_API_BASE_URL` |
+| GitHub Repository | https://github.com/unmesh-varade/calstudio |
 
 ---
 
-## Features
+## Screenshots
 
-### Event Types
+| Dashboard | Public Booking Flow |
+|---|---|
+| Add dashboard screenshot here | Add public booking screenshot here |
 
-- Create, edit, and delete event types
-- Unique public booking links via slug
-- Configurable duration, description, and buffer time
-- Custom booking questions per event type
-
-### Availability
-
-- Weekly availability rules by weekday and time range
-- Timezone-aware scheduling
-- Slots generated dynamically from availability windows
-
-### Public Booking Flow
-
-- Public profile and event pages
-- Calendar-based date selection
-- Guest timezone-aware slot display
-- Real-time slot generation
-- Booking form with custom questions
-- Double booking prevention
-- Booking confirmation page
-- Immediate confirmation-page actions for guest reschedule or cancellation
-
-### Bookings Dashboard
-
-- View upcoming, past, and cancelled bookings
-- Review booking answers submitted by guests
-- Cancel bookings
-- Directly reschedule bookings as admin
-- Request reschedule by cancelling the current booking and notifying the guest to rebook
-
-### Notifications
-
-- Booking confirmation emails
-- Cancellation emails
-- Reschedule emails
-- Rebooking / request-reschedule emails
-
-### Interface
-
-- Responsive layout for desktop, tablet, and mobile
-- Shared booking-style UI patterns across public and admin flows
-- Reused slot-picker flow for booking and rescheduling
-
----
-
-## Bonus Features Implemented
-
-* Responsive UI (desktop, tablet, mobile)
-* Buffer time between meetings
-* Custom booking questions
-* Email notifications (booking, cancellation, reschedule)
-* Guest timezone-aware slot display
-* Public booking management (reschedule/cancel via secure token)
+| Event Types | Bookings |
+|---|---|
+| Add event types screenshot here | Add bookings dashboard screenshot here |
 
 ---
 
 ## Tech Stack
 
-### Frontend
-
-* React
-* Vite
-* React Router
-* TanStack Query
-* react-day-picker
-* Custom CSS
-
-### Backend
-
-* Node.js
-* Express
-* Prisma ORM
-* PostgreSQL
-* Zod validation
-* Nodemailer (SMTP-based email delivery)
+| Layer | Technology |
+|---|---|
+| Frontend | React, Vite, React Router, TanStack Query |
+| UI | Custom CSS, Lucide React, react-day-picker |
+| Backend | Node.js, Express.js |
+| Database | PostgreSQL |
+| ORM | Prisma |
+| Validation | Zod |
+| Email | Nodemailer with SMTP |
+| Deployment | Vercel for frontend, cloud-hosted Node API, hosted PostgreSQL |
 
 ---
 
-## API Overview
+## Features
 
-### Admin Routes
+### Admin Dashboard
 
-* GET /api/event-types
-* POST /api/event-types
-* PATCH /api/event-types/:id
-* DELETE /api/event-types/:id
-* GET /api/bookings
-* PATCH /api/bookings/:id/cancel
+- Create, edit, list, activate/deactivate, and delete event types.
+- Configure event title, description, duration, URL slug, buffer time, and custom booking questions.
+- Manage weekly availability rules with timezone support.
+- View upcoming, past, and cancelled bookings.
+- Cancel bookings, reschedule bookings, and request a guest-side rebooking flow.
 
-### Public Routes
+### Public Booking Experience
 
-* GET /api/public/profiles/:username
-* GET /api/public/.../slots
-* POST /api/public/bookings
+- Public profile page with active event types.
+- Public event page with calendar-based date selection.
+- Timezone-aware available slots for guests.
+- Booking form with name, email, timezone, and event-specific custom questions.
+- Booking confirmation page with event and attendee details.
+- Public manage links for guest cancellation and rescheduling using secure tokens.
+
+### Scheduling Logic
+
+- Stores bookings in UTC for deterministic scheduling.
+- Interprets availability in the organizer schedule timezone.
+- Filters booked slots before showing availability.
+- Prevents double booking with time-overlap checks.
+- Applies event-level buffer time between meetings.
+
+### Email Notifications
+
+- Booking confirmation emails.
+- Cancellation emails.
+- Reschedule confirmation emails.
+- Request-reschedule emails.
 
 ---
 
-## Data Model Highlights
-
-Key entities:
-
-* **User**: organizer identity
-* **AvailabilitySchedule + Rules**: weekly availability
-* **EventType**: meeting template
-* **Booking**: stores attendee + UTC time range
-
-### Important Design Decisions
-
-* All bookings are stored in UTC
-* Availability is interpreted in schedule timezone
-* Slots are generated dynamically, not stored
-* Double booking is prevented using overlap checks
-
-Overlap rule:
+## Project Structure
 
 ```txt
-newStart < existingEnd && newEnd > existingStart
+calstudio/
++-- backend/
+|   +-- prisma/
+|   |   +-- migrations/
+|   |   +-- schema.prisma
+|   |   +-- seed.js
+|   +-- src/
+|   |   +-- config/
+|   |   +-- controllers/
+|   |   +-- db/
+|   |   +-- middleware/
+|   |   +-- routes/
+|   |   +-- services/
+|   |   +-- utils/
+|   |   +-- validations/
+|   |   +-- app.js
+|   |   +-- server.js
+|   +-- package.json
++-- frontend/
+|   +-- public/
+|   +-- src/
+|   |   +-- app/
+|   |   +-- components/
+|   |   +-- features/
+|   |   +-- layouts/
+|   |   +-- lib/
+|   |   +-- pages/
+|   |   +-- styles/
+|   +-- package.json
++-- .env.example
++-- README.md
 ```
 
 ---
 
-## Booking Flow
+## Setup Instructions
 
-1. User opens public booking link
-2. Selects date and timezone
-3. Slots are generated from availability
-4. Booked slots are filtered out
-5. Booking is created and stored in UTC
-6. Confirmation email is sent
-
----
-
-## Getting Started
-
-### 1. Clone repository
+### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/your-repo-name.git
-cd your-repo-name
+git clone https://github.com/unmesh-varade/calstudio.git
+cd calstudio
 ```
 
-### 2. Install dependencies
-
-Backend:
+### 2. Install Backend Dependencies
 
 ```bash
 cd backend
 npm install
 ```
 
-Frontend:
+### 3. Install Frontend Dependencies
 
 ```bash
 cd ../frontend
 npm install
 ```
 
----
+### 4. Configure Environment Variables
 
-### 3. Setup environment variables
+Create environment files using the variables listed below:
 
-Backend (`backend/.env`):
-
-```env
-PORT=4000
-DATABASE_URL=your_database_url
-CORS_ORIGIN=http://localhost:5173
-
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=465
-SMTP_USER=your_email
-SMTP_PASS=your_app_password
-SMTP_SECURE=true
+```txt
+backend/.env
+frontend/.env
 ```
 
-Frontend:
-
-```env
-VITE_API_BASE_URL=http://localhost:4000/api
-```
-
----
-
-### 4. Run database
+### 5. Run Database Migrations and Seed Data
 
 ```bash
-npx prisma migrate dev
-npx prisma generate
+cd backend
+npm run prisma:migrate
+npm run prisma:generate
 npm run prisma:seed
 ```
 
----
-
-### 5. Start application
-
-Backend:
+### 6. Start the Backend
 
 ```bash
+cd backend
 npm run dev
 ```
 
-Frontend:
+The backend runs on:
+
+```txt
+http://localhost:4000
+```
+
+### 7. Start the Frontend
 
 ```bash
+cd frontend
 npm run dev
 ```
 
----
+The frontend runs on:
 
-## Seeded Demo Data
+```txt
+http://localhost:5173
+```
 
-* Default user: `codemorty`
-* Availability: Mon–Fri, 09:00–17:00 (Asia/Kolkata)
-* Sample event types: Intro Call, Project Review
-
-Example URLs:
-
-* /codemorty
-* /codemorty/intro-call
-
----
-
-## Testing
-
-Backend tests cover:
-
-* slot generation
-* overlap detection
-* buffer handling
-
-Run:
+### 8. Run Backend Tests
 
 ```bash
+cd backend
 npm test
 ```
 
 ---
 
-## Known Scope
+## Environment Variables
 
-* Single-admin system (no authentication)
-* No date overrides yet
-* Limited custom question types
-* Basic email delivery via SMTP
+### Backend
+
+| Variable | Purpose |
+|---|---|
+| `PORT` | Backend server port |
+| `DATABASE_URL` | PostgreSQL connection string |
+| `CORS_ORIGIN` | Allowed frontend origin |
+| `EMAIL_FROM` | Sender address for notification emails |
+| `SMTP_HOST` | SMTP host |
+| `SMTP_PORT` | SMTP port |
+| `SMTP_USER` | SMTP username |
+| `SMTP_PASS` | SMTP password or app password |
+| `SMTP_SECURE` | Enables secure SMTP connection |
+
+### Frontend
+
+| Variable | Purpose |
+|---|---|
+| `VITE_API_BASE_URL` | Backend API base URL |
+
+---
+
+## API Endpoints
+
+### System
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/health` | Check API health |
+
+### Event Types
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/event-types` | List admin event types |
+| `POST` | `/api/event-types` | Create an event type |
+| `PATCH` | `/api/event-types/:id` | Update an event type |
+| `DELETE` | `/api/event-types/:id` | Delete an event type |
+
+### Availability
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/availability` | Get default availability schedule |
+| `PUT` | `/api/availability` | Update availability rules and timezone |
+
+### Admin Bookings
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/bookings?view=upcoming` | List bookings by timeline view |
+| `GET` | `/api/bookings/:id` | Get booking details |
+| `GET` | `/api/bookings/:id/reschedule/slots` | Get admin reschedule slots |
+| `POST` | `/api/bookings/:id/reschedule` | Reschedule booking as admin |
+| `POST` | `/api/bookings/:id/request-reschedule` | Ask guest to rebook |
+| `PATCH` | `/api/bookings/:id/cancel` | Cancel booking as admin |
+
+### Public Booking
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/public/profiles/:username` | Get public profile and active event types |
+| `GET` | `/api/public/profiles/:username/event-types/:slug` | Get public event details |
+| `GET` | `/api/public/profiles/:username/event-types/:slug/slots` | Get available public slots |
+| `POST` | `/api/public/bookings` | Create public booking |
+| `GET` | `/api/public/bookings/:bookingId` | Get booking confirmation details |
+| `GET` | `/api/public/bookings/:bookingId/manage` | Get manage-booking details with token |
+| `GET` | `/api/public/bookings/:bookingId/reschedule/slots` | Get guest reschedule slots |
+| `POST` | `/api/public/bookings/:bookingId/reschedule` | Reschedule booking as guest |
+| `POST` | `/api/public/bookings/:bookingId/cancel` | Cancel booking as guest |
+
+---
+
+## Deployment Details
+
+| Service | Usage |
+|---|---|
+| Vercel | Frontend hosting |
+| Node hosting platform | Backend Express API deployment |
+| Hosted PostgreSQL | Production database |
+| SMTP provider | Transactional booking emails |
+
+### Production Configuration
+
+- Frontend uses `VITE_API_BASE_URL` to call the deployed backend API.
+- Backend uses `DATABASE_URL` for PostgreSQL and `CORS_ORIGIN` for allowed frontend origins.
+- Emails are optional in local development; if SMTP variables are missing, the API can run without sending real email.
+- No Google Calendar integration is required; availability and bookings are managed internally through the app database.
+
+---
+
+## Learnings / Challenges
+
+- Designed a normalized scheduling schema with users, schedules, event types, bookings, questions, and answers.
+- Implemented timezone-safe slot generation by storing bookings in UTC and interpreting availability in the organizer timezone.
+- Added conflict prevention using overlap checks before booking creation and rescheduling.
+- Built reusable public and admin booking flows for slot selection, confirmation, cancellation, and rescheduling.
+- Kept the application single-admin as required, while leaving the schema flexible enough for future multi-user support.
 
 ---
 
 ## Future Improvements
 
-* Multiple availability schedules in UI
-* Date overrides and blocked dates
-* Richer custom question types
-* Queue-based email system
-* Multi-user support and authentication
+- Add authentication and multi-user workspaces.
+- Add multiple availability schedules in the dashboard UI.
+- Add date overrides for blocked dates and custom one-off hours.
+- Add richer custom question types such as phone, select, checkbox, and URL.
+- Add calendar integrations such as Google Calendar or Outlook as an optional sync layer.
+- Move email delivery to a background queue for better reliability.
 
----
-
-## Key Learning Focus
-
-This project emphasizes:
-
-* scheduling logic design
-* timezone-safe systems
-* conflict prevention
-* booking lifecycle management
-
----
-
-## Author
-
-Unmesh Varade
-
----
