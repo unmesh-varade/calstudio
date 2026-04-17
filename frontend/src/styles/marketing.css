@@ -37,6 +37,13 @@
   font-size: 1.03rem;
 }
 
+.hero-note {
+  max-width: 58ch;
+  font-size: 0.96rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
 .hero-preview {
   align-content: end;
 }

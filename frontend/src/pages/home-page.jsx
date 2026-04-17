@@ -35,6 +35,9 @@ export function HomePage() {
             This MVP lets one default admin define availability, publish booking links, accept
             guests, and manage bookings from a crisp dashboard.
           </p>
+          <p className="hero-note">
+            If this is your first visit in a while, data may take a moment while the backend wakes up.
+          </p>
           <div className="hero-actions">
             <ButtonLink to="/dashboard/event-types">Go to dashboard</ButtonLink>
             <ButtonLink to="/codemorty" variant="ghost">
