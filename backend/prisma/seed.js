@@ -6,10 +6,7 @@ const { Pool } = require('pg');
 
 const { env } = require('../src/config/env');
 const {
-  addDaysToDateString,
   addMinutes,
-  formatDateTimeInTimeZone,
-  getWeekdayFromDateString,
   zonedLocalTimeToUtc,
 } = require('../src/utils/time');
 
@@ -25,16 +22,6 @@ const prisma = new PrismaClient({
 });
 
 const DEFAULT_TIMEZONE = 'Asia/Calcutta';
-
-function findWeekday(dateString, targetWeekday, direction) {
-  let cursor = dateString;
-
-  while (getWeekdayFromDateString(cursor) !== targetWeekday) {
-    cursor = addDaysToDateString(cursor, direction);
-  }
-
-  return cursor;
-}
 
 function buildBooking({
   userId,
@@ -143,12 +130,11 @@ async function main() {
     },
   });
 
-  const today = formatDateTimeInTimeZone(new Date(), DEFAULT_TIMEZONE).date;
-  const nextTuesday = findWeekday(addDaysToDateString(today, 1), 2, 1);
-  const nextWednesday = findWeekday(addDaysToDateString(today, 1), 3, 1);
-  const nextFriday = findWeekday(addDaysToDateString(today, 1), 5, 1);
-  const previousMonday = findWeekday(addDaysToDateString(today, -1), 1, -1);
-  const previousThursday = findWeekday(addDaysToDateString(today, -1), 4, -1);
+  const nextTuesday = '2026-04-21';
+  const nextWednesday = '2026-04-22';
+  const nextFriday = '2026-04-24';
+  const upcomingMonday = '2026-04-27';
+  const fifteenDaysLater = '2026-05-03';
 
   const introCallWithSchedule = { ...introCall, schedule };
   const projectReviewWithSchedule = { ...projectReview, schedule };
@@ -196,7 +182,7 @@ async function main() {
       ...buildBooking({
         userId: user.id,
         eventType: introCallWithSchedule,
-        dateString: previousMonday,
+        dateString: fifteenDaysLater,
         time: '11:00',
         attendeeName: 'Mina Patel',
         attendeeEmail: 'mina@example.com',
@@ -219,7 +205,7 @@ async function main() {
     data: buildBooking({
       userId: user.id,
       eventType: projectReviewWithSchedule,
-      dateString: previousThursday,
+      dateString: upcomingMonday,
       time: '15:00',
       attendeeName: 'David Miller',
       attendeeEmail: 'david@example.com',

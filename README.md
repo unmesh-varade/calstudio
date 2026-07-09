@@ -14,18 +14,6 @@ CalStudio is a full-stack scheduling and booking platform inspired by Cal.com, b
 
 ---
 
-## Screenshots
-
-| Dashboard | Public Booking Flow |
-|---|---|
-| Add dashboard screenshot here | Add public booking screenshot here |
-
-| Event Types | Bookings |
-|---|---|
-| Add event types screenshot here | Add bookings dashboard screenshot here |
-
----
-
 ## Tech Stack
 
 | Layer | Technology |
