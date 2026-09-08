@@ -136,19 +136,25 @@ async function sendBookingCreatedEmails(booking) {
   logEmailFailures(results);
 }
 
-async function sendBookingCancelledEmails(booking) {
+async function sendBookingCancelledEmails(booking, reason) {
   const title = booking.eventType.title;
   const timeLabel = booking.localStart.label;
+  const reasonBlockText = reason ? ['', `Reason: ${reason}`] : [];
+  const reasonBlockHtml = reason
+    ? `<p><strong>Reason:</strong> ${escapeHtml(reason)}</p>`
+    : '';
   const attendeeText = [
     `Hi ${booking.attendeeName},`,
     '',
     `Your ${title} scheduled for ${timeLabel} has been cancelled.`,
+    ...reasonBlockText,
   ].join('\n');
   const organizerText = [
     `${title} has been cancelled.`,
     '',
     `Attendee: ${booking.attendeeName} <${booking.attendeeEmail}>`,
     `When: ${timeLabel}`,
+    ...reasonBlockText,
   ].join('\n');
 
   const results = await Promise.allSettled([
@@ -161,6 +167,7 @@ async function sendBookingCancelledEmails(booking) {
         <p>Your <strong>${escapeHtml(title)}</strong> scheduled for <strong>${escapeHtml(
           timeLabel,
         )}</strong> has been cancelled.</p>
+        ${reasonBlockHtml}
       `,
     }),
     deliverEmail({
@@ -171,6 +178,7 @@ async function sendBookingCancelledEmails(booking) {
         <p><strong>${escapeHtml(title)}</strong> has been cancelled.</p>
         <p>Attendee: ${escapeHtml(booking.attendeeName)} (${escapeHtml(booking.attendeeEmail)})</p>
         <p>When: ${escapeHtml(timeLabel)}</p>
+        ${reasonBlockHtml}
       `,
     }),
   ]);

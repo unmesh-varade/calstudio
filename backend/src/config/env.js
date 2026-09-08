@@ -6,6 +6,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(4000),
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
+  FRONTEND_URL: z.string().trim().default('http://localhost:5173'),
   EMAIL_FROM: z.string().trim().optional(),
   SMTP_HOST: z.string().trim().optional(),
   SMTP_PORT: z.coerce.number().int().positive().optional(),
@@ -33,6 +34,7 @@ module.exports = {
     corsOrigins: parsed.CORS_ORIGIN.split(',')
       .map((origin) => origin.trim())
       .filter(Boolean),
+    frontendUrl: parsed.FRONTEND_URL.replace(/\/+$/, ''),
     emailFrom: parsed.EMAIL_FROM || 'no-reply@cal.local',
     smtp: parsed.SMTP_HOST
       ? {

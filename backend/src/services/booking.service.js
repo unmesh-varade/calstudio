@@ -54,7 +54,6 @@ async function getPublicProfile(username) {
   return {
     username: user.username,
     name: user.name,
-    bio: 'Scheduling made simple.',
     timezone: user.defaultTimezone,
     eventTypes: user.eventTypes.map((eventType) => ({
       id: eventType.id,
@@ -218,8 +217,6 @@ async function getPublicRescheduleSlots(id, token, dateString, viewerTimeZone) {
 }
 
 async function rescheduleExistingBooking(booking, payload, initiatedBy) {
-  assertBookingCanBeManaged(booking)
-
   const bookingWindow = buildBookingWindow(booking.eventType, payload.date, payload.time)
 
   if (booking.startTimeUtc.getTime() === bookingWindow.startTimeUtc.getTime()) {
@@ -230,6 +227,14 @@ async function rescheduleExistingBooking(booking, payload, initiatedBy) {
 
   const updatedBooking = await prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(${booking.userId})`
+
+    // Re-fetch and re-assert inside the lock so a concurrent cancellation cannot
+    // slip through between the pre-transaction check and the lock acquisition.
+    const freshBooking = await tx.booking.findUnique({
+      where: { id: booking.id },
+      select: { status: true, endTimeUtc: true },
+    })
+    assertBookingCanBeManaged(freshBooking)
 
     await ensureNoConflict(tx, {
       userId: booking.userId,
@@ -330,7 +335,7 @@ async function requestRescheduleBooking(id, payload) {
   const booking = await getBookingByAdminOrThrow(id, bookingInclude)
 
   if (booking.status === 'cancelled') {
-    return serializeBooking(booking)
+    throw createHttpError(409, 'This booking has already been cancelled.')
   }
 
   return markBookingCancelled(booking, payload.reason, 'request_reschedule')

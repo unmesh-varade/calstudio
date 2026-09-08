@@ -6,7 +6,7 @@ async function listBookings(req, res) {
 }
 
 async function cancelBooking(req, res) {
-  const data = await bookingService.cancelBooking(req.validated.params.id);
+  const data = await bookingService.cancelBooking(req.validated.params.id, req.validated.body?.reason);
   res.json({ data });
 }
 

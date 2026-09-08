@@ -48,8 +48,9 @@ function generateAvailableSlots({
       continue;
     }
 
+    const occupiedEndUtc = addMinutes(endUtc, bufferMinutes);
     const overlapsExisting = bookedRanges.some((bookingRange) =>
-      rangesOverlap(startUtc, endUtc, bookingRange.start, bookingRange.end),
+      rangesOverlap(startUtc, occupiedEndUtc, bookingRange.start, bookingRange.end),
     );
 
     if (!overlapsExisting) {

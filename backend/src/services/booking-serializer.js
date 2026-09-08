@@ -1,3 +1,4 @@
+const { env } = require('../config/env')
 const {
   formatDateLabel,
   formatDateTimeInTimeZone,
@@ -45,7 +46,7 @@ function serializeBooking(booking) {
     attendeeTimezone: booking.attendeeTimezone,
     manageToken: booking.manageToken,
     status: booking.status,
-    cancelledAt: booking.cancelledAt,
+    cancelledAt: booking.cancelledAt?.toISOString() ?? null,
     startTimeUtc: booking.startTimeUtc.toISOString(),
     endTimeUtc: booking.endTimeUtc.toISOString(),
     rescheduledAt: booking.rescheduledAt?.toISOString() ?? null,
@@ -54,15 +55,15 @@ function serializeBooking(booking) {
     previousEndTimeUtc: booking.previousEndTimeUtc?.toISOString() ?? null,
     previousLocalStart: booking.previousStartTimeUtc
       ? {
-          label: buildLocalTimeLabel(booking.previousStartTimeUtc, scheduleTimeZone),
-          timeZone: scheduleTimeZone,
-        }
+        label: buildLocalTimeLabel(booking.previousStartTimeUtc, scheduleTimeZone),
+        timeZone: scheduleTimeZone,
+      }
       : null,
     previousLocalEnd: booking.previousEndTimeUtc
       ? {
-          label: buildLocalTimeLabel(booking.previousEndTimeUtc, scheduleTimeZone),
-          timeZone: scheduleTimeZone,
-        }
+        label: buildLocalTimeLabel(booking.previousEndTimeUtc, scheduleTimeZone),
+        timeZone: scheduleTimeZone,
+      }
       : null,
     localStart: {
       date: localStart.date,
@@ -102,7 +103,7 @@ function serializeBooking(booking) {
 }
 
 function buildPublicEventPath(booking) {
-  return `/${booking.eventType.user.username}/${booking.eventType.slug}`
+  return `${env.frontendUrl}/${booking.eventType.user.username}/${booking.eventType.slug}`
 }
 
 module.exports = {

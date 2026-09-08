@@ -31,7 +31,7 @@ router.post(
 );
 router.patch(
   '/:id/cancel',
-  validateRequest({ params: bookingIdSchema }),
+  validateRequest({ params: bookingIdSchema, body: requestRescheduleBodySchema }),
   controller.cancelBooking,
 );
 

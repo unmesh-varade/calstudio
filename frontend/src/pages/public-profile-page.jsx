@@ -23,7 +23,6 @@ export function PublicProfilePage() {
           <div className="public-avatar">{profileQuery.data?.username?.[0]?.toUpperCase() || 'C'}</div>
           <div className="public-profile-copy">
             <h1>{profileQuery.data?.username}</h1>
-            <p>{profileQuery.data?.bio}</p>
           </div>
         </article>
 
