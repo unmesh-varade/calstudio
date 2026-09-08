@@ -1,12 +1,12 @@
-const express = require('express');
+import express from 'express';
 
-const controller = require('../controllers/event-type.controller');
-const { validateRequest } = require('../middleware/validate-request');
-const {
+import * as controller from '../controllers/event-type.controller.js';
+import { validateRequest } from '../middleware/validate-request.js';
+import {
   createEventTypeSchema,
   eventTypeIdSchema,
   updateEventTypeSchema,
-} = require('../validations/event-type.validation');
+} from '../validations/event-type.validation.js';
 
 const router = express.Router();
 
@@ -19,4 +19,4 @@ router.patch(
 );
 router.delete('/:id', validateRequest({ params: eventTypeIdSchema }), controller.deleteEventType);
 
-module.exports = router;
+export default router;

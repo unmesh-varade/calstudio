@@ -1,10 +1,13 @@
-require('dotenv').config();
+import dotenv from 'dotenv';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '@prisma/client';
+import pg from 'pg';
 
-const { PrismaPg } = require('@prisma/adapter-pg');
-const { PrismaClient } = require('@prisma/client');
-const { Pool } = require('pg');
+import { env } from '../src/config/env.js';
 
-const { env } = require('../src/config/env');
+dotenv.config();
+
+const { Pool } = pg;
 
 const pool = new Pool({
   connectionString: env.databaseUrl,

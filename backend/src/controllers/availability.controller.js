@@ -1,16 +1,16 @@
-const availabilityService = require('../services/availability.service');
+import availabilityService from '../services/availability.service.js';
 
-async function getAvailability(req, res) {
+export async function getAvailability(req, res) {
   const data = await availabilityService.getAvailability();
   res.json({ data });
 }
 
-async function updateAvailability(req, res) {
+export async function updateAvailability(req, res) {
   const data = await availabilityService.upsertAvailability(req.validated.body);
   res.json({ data });
 }
 
-module.exports = {
+export default {
   getAvailability,
   updateAvailability,
 };

@@ -7,7 +7,7 @@ function pad(value) {
   return String(value).padStart(2, '0');
 }
 
-function getFormatter(timeZone) {
+export function getFormatter(timeZone) {
   if (!formatterCache.has(timeZone)) {
     formatterCache.set(
       timeZone,
@@ -28,7 +28,7 @@ function getFormatter(timeZone) {
   return formatterCache.get(timeZone);
 }
 
-function parseDateString(dateString) {
+export function parseDateString(dateString) {
   if (!DATE_PATTERN.test(dateString)) {
     throw new Error('Expected a date in YYYY-MM-DD format.');
   }
@@ -37,7 +37,7 @@ function parseDateString(dateString) {
   return { year, month, day };
 }
 
-function parseTimeString(timeString) {
+export function parseTimeString(timeString) {
   const match = timeString.match(TIME_PATTERN);
 
   if (!match) {
@@ -50,33 +50,33 @@ function parseTimeString(timeString) {
   };
 }
 
-function timeStringToMinutes(timeString) {
+export function timeStringToMinutes(timeString) {
   const { hours, minutes } = parseTimeString(timeString);
   return hours * 60 + minutes;
 }
 
-function minutesToTimeString(totalMinutes) {
+export function minutesToTimeString(totalMinutes) {
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
   return `${pad(hours)}:${pad(minutes)}`;
 }
 
-function addMinutes(date, minutes) {
+export function addMinutes(date, minutes) {
   return new Date(date.getTime() + minutes * 60 * 1000);
 }
 
-function addDaysToDateString(dateString, amount) {
+export function addDaysToDateString(dateString, amount) {
   const { year, month, day } = parseDateString(dateString);
   const next = new Date(Date.UTC(year, month - 1, day + amount));
   return `${next.getUTCFullYear()}-${pad(next.getUTCMonth() + 1)}-${pad(next.getUTCDate())}`;
 }
 
-function getWeekdayFromDateString(dateString) {
+export function getWeekdayFromDateString(dateString) {
   const { year, month, day } = parseDateString(dateString);
   return new Date(Date.UTC(year, month - 1, day)).getUTCDay();
 }
 
-function getTimeZoneParts(date, timeZone) {
+export function getTimeZoneParts(date, timeZone) {
   const parts = getFormatter(timeZone).formatToParts(date);
   const values = {};
 
@@ -96,7 +96,7 @@ function getTimeZoneParts(date, timeZone) {
   };
 }
 
-function formatDateTimeInTimeZone(date, timeZone) {
+export function formatDateTimeInTimeZone(date, timeZone) {
   const parts = getTimeZoneParts(date, timeZone);
 
   return {
@@ -106,7 +106,7 @@ function formatDateTimeInTimeZone(date, timeZone) {
   };
 }
 
-function getTimeZoneOffsetMinutes(timeZone, date) {
+export function getTimeZoneOffsetMinutes(timeZone, date) {
   const parts = getTimeZoneParts(date, timeZone);
   const asUtc = Date.UTC(
     parts.year,
@@ -121,7 +121,7 @@ function getTimeZoneOffsetMinutes(timeZone, date) {
   return (asUtc - date.getTime()) / 60000;
 }
 
-function zonedLocalTimeToUtc(dateString, timeString, timeZone) {
+export function zonedLocalTimeToUtc(dateString, timeString, timeZone) {
   const { year, month, day } = parseDateString(dateString);
   const { hours, minutes } = parseTimeString(timeString);
 
@@ -149,7 +149,7 @@ function zonedLocalTimeToUtc(dateString, timeString, timeZone) {
   return result;
 }
 
-function getUtcRangeForLocalDay(dateString, timeZone) {
+export function getUtcRangeForLocalDay(dateString, timeZone) {
   const start = zonedLocalTimeToUtc(dateString, '00:00', timeZone);
   const end = zonedLocalTimeToUtc(addDaysToDateString(dateString, 1), '00:00', timeZone);
 
@@ -159,7 +159,7 @@ function getUtcRangeForLocalDay(dateString, timeZone) {
   };
 }
 
-function formatTimeLabel(date, timeZone) {
+export function formatTimeLabel(date, timeZone) {
   return new Intl.DateTimeFormat('en-US', {
     timeZone,
     hour: 'numeric',
@@ -167,7 +167,7 @@ function formatTimeLabel(date, timeZone) {
   }).format(date);
 }
 
-function formatDateLabel(date, timeZone) {
+export function formatDateLabel(date, timeZone) {
   return new Intl.DateTimeFormat('en-US', {
     timeZone,
     weekday: 'short',
@@ -177,7 +177,7 @@ function formatDateLabel(date, timeZone) {
   }).format(date);
 }
 
-module.exports = {
+export default {
   addDaysToDateString,
   addMinutes,
   formatDateLabel,

@@ -1,8 +1,8 @@
-const prisma = require('../db/prisma')
-const { createHttpError } = require('../utils/http-error')
-const { getAdminUserOrThrow } = require('./admin.service')
+import prisma from '../db/prisma.js';
+import { createHttpError } from '../utils/http-error.js';
+import { getAdminUserOrThrow } from './admin.service.js';
 
-const bookingInclude = {
+export const bookingInclude = {
   answers: {
     orderBy: {
       createdAt: 'asc',
@@ -14,9 +14,9 @@ const bookingInclude = {
       schedule: true,
     },
   },
-}
+};
 
-const bookingManageInclude = {
+export const bookingManageInclude = {
   answers: {
     orderBy: {
       createdAt: 'asc',
@@ -41,9 +41,9 @@ const bookingManageInclude = {
       },
     },
   },
-}
+};
 
-async function getActiveEventTypeByUsernameAndSlugOrThrow(username, slug) {
+export async function getActiveEventTypeByUsernameAndSlugOrThrow(username, slug) {
   const eventType = await prisma.eventType.findFirst({
     where: {
       slug,
@@ -69,52 +69,52 @@ async function getActiveEventTypeByUsernameAndSlugOrThrow(username, slug) {
         },
       },
     },
-  })
+  });
 
   if (!eventType) {
-    throw createHttpError(404, 'Public event type not found.')
+    throw createHttpError(404, 'Public event type not found.');
   }
 
-  return eventType
+  return eventType;
 }
 
-async function getBookingByAdminOrThrow(id, include = bookingInclude) {
-  const admin = await getAdminUserOrThrow()
+export async function getBookingByAdminOrThrow(id, include = bookingInclude) {
+  const admin = await getAdminUserOrThrow();
   const booking = await prisma.booking.findFirst({
     where: {
       id,
       userId: admin.id,
     },
     include,
-  })
+  });
 
   if (!booking) {
-    throw createHttpError(404, 'Booking not found.')
+    throw createHttpError(404, 'Booking not found.');
   }
 
-  return booking
+  return booking;
 }
 
-async function getBookingByManageTokenOrThrow(id, token, include = bookingManageInclude) {
+export async function getBookingByManageTokenOrThrow(id, token, include = bookingManageInclude) {
   const booking = await prisma.booking.findFirst({
     where: {
       id,
       manageToken: token,
     },
     include,
-  })
+  });
 
   if (!booking) {
-    throw createHttpError(404, 'Booking not found.')
+    throw createHttpError(404, 'Booking not found.');
   }
 
-  return booking
+  return booking;
 }
 
-module.exports = {
+export default {
   bookingInclude,
   bookingManageInclude,
   getActiveEventTypeByUsernameAndSlugOrThrow,
   getBookingByAdminOrThrow,
   getBookingByManageTokenOrThrow,
-}
+};

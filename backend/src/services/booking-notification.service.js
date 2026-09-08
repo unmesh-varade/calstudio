@@ -1,38 +1,38 @@
-const {
+import {
   sendBookingCancelledEmails,
   sendBookingCreatedEmails,
   sendBookingRequestedRescheduleEmails,
   sendBookingRescheduledEmails,
-} = require('./email.service')
+} from './email.service.js';
 
-function notifyBookingCreated(booking) {
-  void sendBookingCreatedEmails(booking)
+export function notifyBookingCreated(booking) {
+  void sendBookingCreatedEmails(booking);
 }
 
-function notifyBookingCancelled(booking, reason) {
-  void sendBookingCancelledEmails(booking, reason)
+export function notifyBookingCancelled(booking, reason) {
+  void sendBookingCancelledEmails(booking, reason);
 }
 
-function notifyBookingRescheduled({ booking, previousBooking, initiatedBy, reason }) {
+export function notifyBookingRescheduled({ booking, previousBooking, initiatedBy, reason }) {
   void sendBookingRescheduledEmails({
     booking,
     previousBooking,
     initiatedBy,
     reason,
-  })
+  });
 }
 
-function notifyBookingRescheduleRequested({ booking, reason, rebookPath }) {
+export function notifyBookingRescheduleRequested({ booking, reason, rebookPath }) {
   void sendBookingRequestedRescheduleEmails({
     booking,
     reason,
     rebookPath,
-  })
+  });
 }
 
-module.exports = {
+export default {
   notifyBookingCancelled,
   notifyBookingCreated,
   notifyBookingRescheduleRequested,
   notifyBookingRescheduled,
-}
+};

@@ -1,6 +1,7 @@
-const { z } = require('zod');
+import { z } from 'zod';
+import dotenv from 'dotenv';
 
-require('dotenv').config();
+dotenv.config();
 
 const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(4000),
@@ -27,23 +28,23 @@ function normalizeDatabaseUrl(url) {
   return trimmed;
 }
 
-module.exports = {
-  env: {
-    port: parsed.PORT,
-    databaseUrl: normalizeDatabaseUrl(parsed.DATABASE_URL),
-    corsOrigins: parsed.CORS_ORIGIN.split(',')
-      .map((origin) => origin.trim())
-      .filter(Boolean),
-    frontendUrl: parsed.FRONTEND_URL.replace(/\/+$/, ''),
-    emailFrom: parsed.EMAIL_FROM || 'no-reply@cal.local',
-    smtp: parsed.SMTP_HOST
-      ? {
-          host: parsed.SMTP_HOST,
-          port: parsed.SMTP_PORT || 587,
-          user: parsed.SMTP_USER,
-          pass: parsed.SMTP_PASS,
-          secure: parsed.SMTP_SECURE === true || parsed.SMTP_SECURE === 'true',
-        }
-      : null,
-  },
+export const env = {
+  port: parsed.PORT,
+  databaseUrl: normalizeDatabaseUrl(parsed.DATABASE_URL),
+  corsOrigins: parsed.CORS_ORIGIN.split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+  frontendUrl: parsed.FRONTEND_URL.replace(/\/+$/, ''),
+  emailFrom: parsed.EMAIL_FROM || 'no-reply@cal.local',
+  smtp: parsed.SMTP_HOST
+    ? {
+        host: parsed.SMTP_HOST,
+        port: parsed.SMTP_PORT || 587,
+        user: parsed.SMTP_USER,
+        pass: parsed.SMTP_PASS,
+        secure: parsed.SMTP_SECURE === true || parsed.SMTP_SECURE === 'true',
+      }
+    : null,
 };
+
+export default env;

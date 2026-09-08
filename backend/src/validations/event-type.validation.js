@@ -1,12 +1,12 @@
-const { z } = require('zod');
+import { z } from 'zod';
 
-const { slugSchema } = require('./shared');
+import { slugSchema } from './shared.js';
 
 const booleanSchema = z
   .union([z.boolean(), z.enum(['true', 'false'])])
   .transform((value) => value === true || value === 'true');
 
-const questionSchema = z.object({
+export const questionSchema = z.object({
   id: z.coerce.number().int().positive().optional(),
   label: z.string().trim().min(1).max(160),
   type: z.enum(['shortText', 'longText']).default('shortText'),
@@ -19,7 +19,7 @@ const questionSchema = z.object({
   isRequired: booleanSchema.default(false),
 });
 
-const eventTypeBodySchema = z.object({
+export const eventTypeBodySchema = z.object({
   title: z.string().trim().min(1).max(120),
   description: z.string().trim().min(1).max(500),
   durationMinutes: z.coerce.number().int().positive().max(480),
@@ -30,17 +30,17 @@ const eventTypeBodySchema = z.object({
   questions: z.array(questionSchema).max(8).default([]),
 });
 
-const createEventTypeSchema = eventTypeBodySchema;
+export const createEventTypeSchema = eventTypeBodySchema;
 
-const updateEventTypeSchema = eventTypeBodySchema
+export const updateEventTypeSchema = eventTypeBodySchema
   .partial()
   .refine((value) => Object.keys(value).length > 0, 'Provide at least one field to update.');
 
-const eventTypeIdSchema = z.object({
+export const eventTypeIdSchema = z.object({
   id: z.coerce.number().int().positive(),
 });
 
-module.exports = {
+export default {
   createEventTypeSchema,
   eventTypeIdSchema,
   updateEventTypeSchema,

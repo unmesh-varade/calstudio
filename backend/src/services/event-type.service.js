@@ -1,12 +1,12 @@
-const prisma = require('../db/prisma');
-const { createHttpError } = require('../utils/http-error');
-const {
+import prisma from '../db/prisma.js';
+import { createHttpError } from '../utils/http-error.js';
+import {
   ensureScheduleBelongsToAdmin,
   getAdminUserOrThrow,
   getDefaultScheduleOrThrow,
-} = require('./admin.service');
+} from './admin.service.js';
 
-function serializeEventType(eventType) {
+export function serializeEventType(eventType) {
   return {
     id: eventType.id,
     title: eventType.title,
@@ -37,7 +37,7 @@ function serializeEventType(eventType) {
   };
 }
 
-function buildQuestionData(questions = []) {
+export function buildQuestionData(questions = []) {
   return questions.map((question, index) => ({
     label: question.label,
     type: question.type,
@@ -47,7 +47,7 @@ function buildQuestionData(questions = []) {
   }));
 }
 
-async function listEventTypes() {
+export async function listEventTypes() {
   const admin = await getAdminUserOrThrow();
   const eventTypes = await prisma.eventType.findMany({
     where: {
@@ -83,7 +83,7 @@ async function listEventTypes() {
   return eventTypes.map(serializeEventType);
 }
 
-async function createEventType(payload) {
+export async function createEventType(payload) {
   const admin = await getAdminUserOrThrow();
   const schedule =
     payload.scheduleId != null
@@ -133,7 +133,7 @@ async function createEventType(payload) {
   return serializeEventType(eventType);
 }
 
-async function updateEventType(id, payload) {
+export async function updateEventType(id, payload) {
   const admin = await getAdminUserOrThrow();
   const existing = await prisma.eventType.findFirst({
     where: {
@@ -216,7 +216,7 @@ async function updateEventType(id, payload) {
   return serializeEventType(eventType);
 }
 
-async function deleteEventType(id) {
+export async function deleteEventType(id) {
   const admin = await getAdminUserOrThrow();
   const existing = await prisma.eventType.findFirst({
     where: {
@@ -255,7 +255,7 @@ async function deleteEventType(id) {
   };
 }
 
-module.exports = {
+export default {
   createEventType,
   deleteEventType,
   listEventTypes,

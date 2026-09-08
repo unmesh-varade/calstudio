@@ -1,7 +1,7 @@
-const prisma = require('../db/prisma');
-const { getAdminUserOrThrow, getDefaultScheduleOrThrow } = require('./admin.service');
+import prisma from '../db/prisma.js';
+import { getAdminUserOrThrow, getDefaultScheduleOrThrow } from './admin.service.js';
 
-function serializeSchedule(schedule) {
+export function serializeSchedule(schedule) {
   return {
     id: schedule.id,
     name: schedule.name,
@@ -16,13 +16,13 @@ function serializeSchedule(schedule) {
   };
 }
 
-async function getAvailability() {
+export async function getAvailability() {
   const admin = await getAdminUserOrThrow();
   const schedule = await getDefaultScheduleOrThrow(admin.id);
   return serializeSchedule(schedule);
 }
 
-async function upsertAvailability(payload) {
+export async function upsertAvailability(payload) {
   const admin = await getAdminUserOrThrow();
   const existingSchedule = await prisma.availabilitySchedule.findFirst({
     where: {
@@ -97,7 +97,7 @@ async function upsertAvailability(payload) {
   return serializeSchedule(schedule);
 }
 
-module.exports = {
+export default {
   getAvailability,
   serializeSchedule,
   upsertAvailability,

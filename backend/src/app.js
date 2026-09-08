@@ -1,12 +1,12 @@
-const cors = require('cors');
-const express = require('express');
+import cors from 'cors';
+import express from 'express';
 
-const { env } = require('./config/env');
-const { errorHandler } = require('./middleware/error-handler');
-const { notFound } = require('./middleware/not-found');
-const apiRouter = require('./routes');
+import { env } from './config/env.js';
+import { errorHandler } from './middleware/error-handler.js';
+import { notFound } from './middleware/not-found.js';
+import apiRouter from './routes/index.js';
 
-const app = express();
+export const app = express();
 
 app.use(
   cors({
@@ -20,4 +20,4 @@ app.use('/api', apiRouter);
 app.use(notFound);
 app.use(errorHandler);
 
-module.exports = app;
+export default app;

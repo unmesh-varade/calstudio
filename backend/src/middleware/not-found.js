@@ -1,9 +1,9 @@
-const { createHttpError } = require('../utils/http-error');
+import { createHttpError } from '../utils/http-error.js';
 
-function notFound(req, res, next) {
+export function notFound(req, res, next) {
   next(createHttpError(404, `Route not found: ${req.method} ${req.originalUrl}`));
 }
 
-module.exports = {
+export default {
   notFound,
 };

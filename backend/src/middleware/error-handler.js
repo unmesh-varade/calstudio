@@ -1,7 +1,7 @@
-const { Prisma } = require('@prisma/client');
-const { ZodError } = require('zod');
+import { Prisma } from '@prisma/client';
+import { ZodError } from 'zod';
 
-function errorHandler(error, req, res, next) {
+export function errorHandler(error, req, res, next) {
   if (res.headersSent) {
     return next(error);
   }
@@ -32,6 +32,6 @@ function errorHandler(error, req, res, next) {
   });
 }
 
-module.exports = {
+export default {
   errorHandler,
 };

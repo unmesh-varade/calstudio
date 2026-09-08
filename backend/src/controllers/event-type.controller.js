@@ -1,16 +1,16 @@
-const eventTypeService = require('../services/event-type.service');
+import eventTypeService from '../services/event-type.service.js';
 
-async function listEventTypes(req, res) {
+export async function listEventTypes(req, res) {
   const data = await eventTypeService.listEventTypes();
   res.json({ data });
 }
 
-async function createEventType(req, res) {
+export async function createEventType(req, res) {
   const data = await eventTypeService.createEventType(req.validated.body);
   res.status(201).json({ data });
 }
 
-async function updateEventType(req, res) {
+export async function updateEventType(req, res) {
   const data = await eventTypeService.updateEventType(
     req.validated.params.id,
     req.validated.body,
@@ -18,12 +18,12 @@ async function updateEventType(req, res) {
   res.json({ data });
 }
 
-async function deleteEventType(req, res) {
+export async function deleteEventType(req, res) {
   const data = await eventTypeService.deleteEventType(req.validated.params.id);
   res.json({ data });
 }
 
-module.exports = {
+export default {
   createEventType,
   deleteEventType,
   listEventTypes,

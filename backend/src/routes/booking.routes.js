@@ -1,14 +1,14 @@
-const express = require('express');
+import express from 'express';
 
-const controller = require('../controllers/booking.controller');
-const { validateRequest } = require('../middleware/validate-request');
-const {
+import * as controller from '../controllers/booking.controller.js';
+import { validateRequest } from '../middleware/validate-request.js';
+import {
   bookingIdSchema,
   bookingListQuerySchema,
   publicSlotsQuerySchema,
   requestRescheduleBodySchema,
   rescheduleBookingBodySchema,
-} = require('../validations/booking.validation');
+} from '../validations/booking.validation.js';
 
 const router = express.Router();
 
@@ -35,4 +35,4 @@ router.patch(
   controller.cancelBooking,
 );
 
-module.exports = router;
+export default router;

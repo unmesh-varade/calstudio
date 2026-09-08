@@ -1,11 +1,11 @@
-const { env } = require('../config/env')
-const {
+import { env } from '../config/env.js';
+import {
   formatDateLabel,
   formatDateTimeInTimeZone,
   formatTimeLabel,
-} = require('../utils/time')
+} from '../utils/time.js';
 
-function serializeEventTypeForPublic(eventType) {
+export function serializeEventTypeForPublic(eventType) {
   return {
     id: eventType.id,
     title: eventType.title,
@@ -27,17 +27,17 @@ function serializeEventTypeForPublic(eventType) {
       isRequired: question.isRequired,
       sortOrder: question.sortOrder,
     })),
-  }
+  };
 }
 
-function buildLocalTimeLabel(date, timeZone) {
-  return `${formatDateLabel(date, timeZone)} at ${formatTimeLabel(date, timeZone)}`
+export function buildLocalTimeLabel(date, timeZone) {
+  return `${formatDateLabel(date, timeZone)} at ${formatTimeLabel(date, timeZone)}`;
 }
 
-function serializeBooking(booking) {
-  const scheduleTimeZone = booking.eventType.schedule.timezone
-  const localStart = formatDateTimeInTimeZone(booking.startTimeUtc, scheduleTimeZone)
-  const localEnd = formatDateTimeInTimeZone(booking.endTimeUtc, scheduleTimeZone)
+export function serializeBooking(booking) {
+  const scheduleTimeZone = booking.eventType.schedule.timezone;
+  const localStart = formatDateTimeInTimeZone(booking.startTimeUtc, scheduleTimeZone);
+  const localEnd = formatDateTimeInTimeZone(booking.endTimeUtc, scheduleTimeZone);
 
   return {
     id: booking.id,
@@ -55,15 +55,15 @@ function serializeBooking(booking) {
     previousEndTimeUtc: booking.previousEndTimeUtc?.toISOString() ?? null,
     previousLocalStart: booking.previousStartTimeUtc
       ? {
-        label: buildLocalTimeLabel(booking.previousStartTimeUtc, scheduleTimeZone),
-        timeZone: scheduleTimeZone,
-      }
+          label: buildLocalTimeLabel(booking.previousStartTimeUtc, scheduleTimeZone),
+          timeZone: scheduleTimeZone,
+        }
       : null,
     previousLocalEnd: booking.previousEndTimeUtc
       ? {
-        label: buildLocalTimeLabel(booking.previousEndTimeUtc, scheduleTimeZone),
-        timeZone: scheduleTimeZone,
-      }
+          label: buildLocalTimeLabel(booking.previousEndTimeUtc, scheduleTimeZone),
+          timeZone: scheduleTimeZone,
+        }
       : null,
     localStart: {
       date: localStart.date,
@@ -99,15 +99,16 @@ function serializeBooking(booking) {
       value: answer.value,
     })),
     organizerUsername: booking.eventType.user.username,
-  }
+  };
 }
 
-function buildPublicEventPath(booking) {
-  return `${env.frontendUrl}/${booking.eventType.user.username}/${booking.eventType.slug}`
+export function buildPublicEventPath(booking) {
+  return `${env.frontendUrl}/${booking.eventType.user.username}/${booking.eventType.slug}`;
 }
 
-module.exports = {
+export default {
+  buildLocalTimeLabel,
   buildPublicEventPath,
   serializeBooking,
   serializeEventTypeForPublic,
-}
+};

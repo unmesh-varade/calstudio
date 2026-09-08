@@ -1,10 +1,10 @@
-function getHealth(req, res) {
+export function getHealth(req, res) {
   res.json({
     ok: true,
     timestamp: new Date().toISOString(),
   });
 }
 
-module.exports = {
+export default {
   getHealth,
 };

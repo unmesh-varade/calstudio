@@ -1,6 +1,6 @@
-const app = require('./app');
-const { env } = require('./config/env');
-const prisma = require('./db/prisma');
+import app from './app.js';
+import { env } from './config/env.js';
+import prisma from './db/prisma.js';
 
 const server = app.listen(env.port, () => {
   console.log(`Backend listening on port ${env.port}`);

@@ -1,8 +1,8 @@
-const assert = require('node:assert/strict');
-const test = require('node:test');
+import assert from 'node:assert/strict';
+import test from 'node:test';
 
-const { generateAvailableSlots, isSlotAligned, rangesOverlap } = require('../src/utils/scheduling');
-const { addMinutes, zonedLocalTimeToUtc } = require('../src/utils/time');
+import { generateAvailableSlots, isSlotAligned, rangesOverlap } from '../src/utils/scheduling.js';
+import { addMinutes, zonedLocalTimeToUtc } from '../src/utils/time.js';
 
 test('rangesOverlap follows the overlap rule from the spec', () => {
   const firstStart = new Date('2026-04-15T09:00:00.000Z');

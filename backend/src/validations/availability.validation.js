@@ -1,9 +1,9 @@
-const { z } = require('zod');
+import { z } from 'zod';
 
-const { timeStringToMinutes } = require('../utils/time');
-const { timeSchema, timeZoneSchema } = require('./shared');
+import { timeStringToMinutes } from '../utils/time.js';
+import { timeSchema, timeZoneSchema } from './shared.js';
 
-const availabilityRuleSchema = z
+export const availabilityRuleSchema = z
   .object({
     weekday: z.coerce.number().int().min(0).max(6),
     startTime: timeSchema,
@@ -17,7 +17,7 @@ const availabilityRuleSchema = z
     },
   );
 
-const updateAvailabilitySchema = z
+export const updateAvailabilitySchema = z
   .object({
     name: z.string().trim().min(1).max(100).default('Default availability'),
     timezone: timeZoneSchema,
@@ -39,6 +39,7 @@ const updateAvailabilitySchema = z
     });
   });
 
-module.exports = {
+export default {
+  availabilityRuleSchema,
   updateAvailabilitySchema,
 };

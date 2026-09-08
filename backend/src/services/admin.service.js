@@ -1,7 +1,7 @@
-const prisma = require('../db/prisma');
-const { createHttpError } = require('../utils/http-error');
+import prisma from '../db/prisma.js';
+import { createHttpError } from '../utils/http-error.js';
 
-async function getAdminUserOrThrow() {
+export async function getAdminUserOrThrow() {
   const admin = await prisma.user.findFirst({
     orderBy: {
       id: 'asc',
@@ -15,7 +15,7 @@ async function getAdminUserOrThrow() {
   return admin;
 }
 
-async function getDefaultScheduleOrThrow(userId) {
+export async function getDefaultScheduleOrThrow(userId) {
   const schedule = await prisma.availabilitySchedule.findFirst({
     where: {
       userId,
@@ -37,7 +37,7 @@ async function getDefaultScheduleOrThrow(userId) {
   return schedule;
 }
 
-async function ensureScheduleBelongsToAdmin(scheduleId, userId) {
+export async function ensureScheduleBelongsToAdmin(scheduleId, userId) {
   const schedule = await prisma.availabilitySchedule.findFirst({
     where: {
       id: scheduleId,
@@ -52,7 +52,7 @@ async function ensureScheduleBelongsToAdmin(scheduleId, userId) {
   return schedule;
 }
 
-module.exports = {
+export default {
   ensureScheduleBelongsToAdmin,
   getAdminUserOrThrow,
   getDefaultScheduleOrThrow,

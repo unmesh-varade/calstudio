@@ -1,8 +1,8 @@
-const express = require('express');
+import express from 'express';
 
-const controller = require('../controllers/public.controller');
-const { validateRequest } = require('../middleware/validate-request');
-const {
+import * as controller from '../controllers/public.controller.js';
+import { validateRequest } from '../middleware/validate-request.js';
+import {
   createPublicBookingSchema,
   manageTokenQuerySchema,
   publicCancelBookingBodySchema,
@@ -12,7 +12,7 @@ const {
   publicSlugParamsSchema,
   publicSlotsQuerySchema,
   rescheduleBookingBodySchema,
-} = require('../validations/booking.validation');
+} from '../validations/booking.validation.js';
 
 const router = express.Router();
 
@@ -79,4 +79,4 @@ router.post(
   controller.createPublicBooking,
 );
 
-module.exports = router;
+export default router;

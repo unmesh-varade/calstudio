@@ -1,8 +1,10 @@
-const { PrismaPg } = require('@prisma/adapter-pg');
-const { PrismaClient } = require('@prisma/client');
-const { Pool } = require('pg');
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '@prisma/client';
+import pg from 'pg';
 
-const { env } = require('../config/env');
+import { env } from '../config/env.js';
+
+const { Pool } = pg;
 
 const globalForPrisma = globalThis;
 
@@ -19,7 +21,7 @@ const adapter =
     disposeExternalPool: true,
   });
 
-const prisma =
+export const prisma =
   globalForPrisma.prisma ||
   new PrismaClient({
     adapter,
@@ -32,4 +34,4 @@ if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma;
 }
 
-module.exports = prisma;
+export default prisma;

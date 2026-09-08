@@ -1,7 +1,7 @@
-const prisma = require('../db/prisma')
-const { createHttpError } = require('../utils/http-error')
-const { generateAvailableSlots, isSlotAligned, isSlotWithinWindow } = require('../utils/scheduling')
-const {
+import prisma from '../db/prisma.js';
+import { createHttpError } from '../utils/http-error.js';
+import { generateAvailableSlots, isSlotAligned, isSlotWithinWindow } from '../utils/scheduling.js';
+import {
   addMinutes,
   formatDateTimeInTimeZone,
   formatTimeLabel,
@@ -9,31 +9,31 @@ const {
   getWeekdayFromDateString,
   timeStringToMinutes,
   zonedLocalTimeToUtc,
-} = require('../utils/time')
-const { serializeEventTypeForPublic } = require('./booking-serializer')
+} from '../utils/time.js';
+import { serializeEventTypeForPublic } from './booking-serializer.js';
 
 function getRuleForDate(eventType, dateString) {
-  const weekday = getWeekdayFromDateString(dateString)
-  return eventType.schedule.rules.find((rule) => rule.weekday === weekday) || null
+  const weekday = getWeekdayFromDateString(dateString);
+  return eventType.schedule.rules.find((rule) => rule.weekday === weekday) || null;
 }
 
 function unique(values) {
-  return [...new Set(values)]
+  return [...new Set(values)];
 }
 
-async function getSlotPayloadForEventType({ eventType, userId, dateString, viewerTimeZone, excludeBookingId }) {
-  const displayTimeZone = viewerTimeZone || eventType.schedule.timezone
-  const displayDayRange = getUtcRangeForLocalDay(dateString, displayTimeZone)
+export async function getSlotPayloadForEventType({ eventType, userId, dateString, viewerTimeZone, excludeBookingId }) {
+  const displayTimeZone = viewerTimeZone || eventType.schedule.timezone;
+  const displayDayRange = getUtcRangeForLocalDay(dateString, displayTimeZone);
   const candidateEventDates = unique([
     formatDateTimeInTimeZone(displayDayRange.start, eventType.schedule.timezone).date,
     formatDateTimeInTimeZone(new Date(displayDayRange.end.getTime() - 1), eventType.schedule.timezone).date,
-  ])
+  ]);
   const eventDateRanges = candidateEventDates.map((eventDate) => ({
     eventDate,
     rule: getRuleForDate(eventType, eventDate),
     range: getUtcRangeForLocalDay(eventDate, eventType.schedule.timezone),
-  }))
-  const activeEventDateRanges = eventDateRanges.filter((entry) => entry.rule)
+  }));
+  const activeEventDateRanges = eventDateRanges.filter((entry) => entry.rule);
 
   if (!activeEventDateRanges.length) {
     return {
@@ -42,17 +42,17 @@ async function getSlotPayloadForEventType({ eventType, userId, dateString, viewe
       eventTimeZone: eventType.schedule.timezone,
       eventType: serializeEventTypeForPublic(eventType),
       slots: [],
-    }
+    };
   }
 
   const queryStart = activeEventDateRanges.reduce(
     (earliest, entry) => (entry.range.start < earliest ? entry.range.start : earliest),
     activeEventDateRanges[0].range.start,
-  )
+  );
   const queryEnd = activeEventDateRanges.reduce(
     (latest, entry) => (entry.range.end > latest ? entry.range.end : latest),
     activeEventDateRanges[0].range.end,
-  )
+  );
 
   const scheduledBookings = await prisma.booking.findMany({
     where: {
@@ -80,12 +80,12 @@ async function getSlotPayloadForEventType({ eventType, userId, dateString, viewe
         },
       },
     },
-  })
+  });
 
   const bookedRanges = scheduledBookings.map((booking) => ({
     start: booking.startTimeUtc,
     end: addMinutes(booking.endTimeUtc, booking.eventType.bufferMinutes),
-  }))
+  }));
 
   const slots = activeEventDateRanges
     .flatMap(({ eventDate, rule }) =>
@@ -103,7 +103,7 @@ async function getSlotPayloadForEventType({ eventType, userId, dateString, viewe
       })),
     )
     .filter((slot) => slot.startUtc >= displayDayRange.start && slot.startUtc < displayDayRange.end)
-    .sort((left, right) => left.startUtc - right.startUtc)
+    .sort((left, right) => left.startUtc - right.startUtc);
 
   return {
     date: dateString,
@@ -117,55 +117,55 @@ async function getSlotPayloadForEventType({ eventType, userId, dateString, viewe
       startTimeUtc: slot.startUtc.toISOString(),
       endTimeUtc: slot.endUtc.toISOString(),
     })),
-  }
+  };
 }
 
-function buildBookingWindow(eventType, dateString, timeString) {
-  const rule = getRuleForDate(eventType, dateString)
+export function buildBookingWindow(eventType, dateString, timeString) {
+  const rule = getRuleForDate(eventType, dateString);
 
   if (!rule) {
-    throw createHttpError(400, 'This event type is not available on the selected day.')
+    throw createHttpError(400, 'This event type is not available on the selected day.');
   }
 
-  const slotStartMinutes = timeStringToMinutes(timeString)
-  const windowStartMinutes = timeStringToMinutes(rule.startTime)
-  const windowEndMinutes = timeStringToMinutes(rule.endTime)
-  const occupiedMinutes = eventType.durationMinutes + eventType.bufferMinutes
+  const slotStartMinutes = timeStringToMinutes(timeString);
+  const windowStartMinutes = timeStringToMinutes(rule.startTime);
+  const windowEndMinutes = timeStringToMinutes(rule.endTime);
+  const occupiedMinutes = eventType.durationMinutes + eventType.bufferMinutes;
 
   if (!isSlotWithinWindow(slotStartMinutes, occupiedMinutes, windowStartMinutes, windowEndMinutes)) {
-    throw createHttpError(400, 'The selected slot falls outside the availability window.')
+    throw createHttpError(400, 'The selected slot falls outside the availability window.');
   }
 
   if (!isSlotAligned(slotStartMinutes, windowStartMinutes, occupiedMinutes)) {
-    throw createHttpError(400, 'The selected slot does not align with the event duration.')
+    throw createHttpError(400, 'The selected slot does not align with the event duration.');
   }
 
-  const startTimeUtc = zonedLocalTimeToUtc(dateString, timeString, eventType.schedule.timezone)
+  const startTimeUtc = zonedLocalTimeToUtc(dateString, timeString, eventType.schedule.timezone);
 
   if (startTimeUtc <= new Date()) {
-    throw createHttpError(400, 'The selected slot is already in the past.')
+    throw createHttpError(400, 'The selected slot is already in the past.');
   }
 
   return {
     startTimeUtc,
     endTimeUtc: addMinutes(startTimeUtc, eventType.durationMinutes),
-  }
+  };
 }
 
-function normalizeBookingAnswers(eventType, submittedAnswers = []) {
+export function normalizeBookingAnswers(eventType, submittedAnswers = []) {
   const submittedByQuestionId = new Map(
     submittedAnswers.map((answer) => [answer.questionId, answer.value.trim()]),
-  )
+  );
 
   return eventType.questions.map((question) => {
-    const value = submittedByQuestionId.get(question.id) || ''
+    const value = submittedByQuestionId.get(question.id) || '';
 
     if (question.isRequired && !value) {
-      throw createHttpError(400, `Please answer "${question.label}".`)
+      throw createHttpError(400, `Please answer "${question.label}".`);
     }
 
     if (value.length > 2000) {
-      throw createHttpError(400, `"${question.label}" is too long.`)
+      throw createHttpError(400, `"${question.label}" is too long.`);
     }
 
     return {
@@ -173,12 +173,12 @@ function normalizeBookingAnswers(eventType, submittedAnswers = []) {
       questionLabel: question.label,
       questionType: question.type,
       value,
-    }
-  })
+    };
+  });
 }
 
-async function ensureNoConflict(tx, { userId, bookingWindow, eventType, excludeBookingId }) {
-  const newOccupiedEnd = addMinutes(bookingWindow.endTimeUtc, eventType.bufferMinutes)
+export async function ensureNoConflict(tx, { userId, bookingWindow, eventType, excludeBookingId }) {
+  const newOccupiedEnd = addMinutes(bookingWindow.endTimeUtc, eventType.bufferMinutes);
   const conflictingBookings = await tx.booking.findMany({
     where: {
       userId,
@@ -202,33 +202,33 @@ async function ensureNoConflict(tx, { userId, bookingWindow, eventType, excludeB
         },
       },
     },
-  })
+  });
 
   const conflictingBooking = conflictingBookings.find(
     (booking) =>
       booking.startTimeUtc < newOccupiedEnd &&
       addMinutes(booking.endTimeUtc, booking.eventType.bufferMinutes) > bookingWindow.startTimeUtc,
-  )
+  );
 
   if (conflictingBooking) {
-    throw createHttpError(409, 'That time has just been booked. Please pick another slot.')
+    throw createHttpError(409, 'That time has just been booked. Please pick another slot.');
   }
 }
 
-function assertBookingCanBeManaged(booking) {
+export function assertBookingCanBeManaged(booking) {
   if (booking.status === 'cancelled') {
-    throw createHttpError(409, 'This booking has already been cancelled.')
+    throw createHttpError(409, 'This booking has already been cancelled.');
   }
 
   if (booking.endTimeUtc <= new Date()) {
-    throw createHttpError(409, 'Past bookings cannot be changed.')
+    throw createHttpError(409, 'Past bookings cannot be changed.');
   }
 }
 
-module.exports = {
+export default {
   assertBookingCanBeManaged,
   buildBookingWindow,
   ensureNoConflict,
   getSlotPayloadForEventType,
   normalizeBookingAnswers,
-}
+};

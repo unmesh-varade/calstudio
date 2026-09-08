@@ -1,4 +1,4 @@
-const { env } = require('../config/env');
+import { env } from '../config/env.js';
 
 let transportPromise;
 
@@ -81,7 +81,7 @@ function logEmailFailures(results) {
   });
 }
 
-async function sendBookingCreatedEmails(booking) {
+export async function sendBookingCreatedEmails(booking) {
   const answerBlock = renderAnswers(booking.answers);
   const title = booking.eventType.title;
   const timeLabel = booking.localStart.label;
@@ -136,7 +136,7 @@ async function sendBookingCreatedEmails(booking) {
   logEmailFailures(results);
 }
 
-async function sendBookingCancelledEmails(booking, reason) {
+export async function sendBookingCancelledEmails(booking, reason) {
   const title = booking.eventType.title;
   const timeLabel = booking.localStart.label;
   const reasonBlockText = reason ? ['', `Reason: ${reason}`] : [];
@@ -186,7 +186,7 @@ async function sendBookingCancelledEmails(booking, reason) {
   logEmailFailures(results);
 }
 
-async function sendBookingRescheduledEmails({ booking, previousBooking, initiatedBy, reason }) {
+export async function sendBookingRescheduledEmails({ booking, previousBooking, initiatedBy, reason }) {
   const title = booking.eventType.title;
   const previousTimeLabel = previousBooking.localStart.label;
   const updatedTimeLabel = booking.localStart.label;
@@ -244,7 +244,7 @@ async function sendBookingRescheduledEmails({ booking, previousBooking, initiate
   logEmailFailures(results);
 }
 
-async function sendBookingRequestedRescheduleEmails({ booking, reason, rebookPath }) {
+export async function sendBookingRequestedRescheduleEmails({ booking, reason, rebookPath }) {
   const title = booking.eventType.title;
   const timeLabel = booking.localStart.label;
   const reasonBlockText = reason ? ['', `Reason: ${reason}`] : [];
@@ -298,7 +298,7 @@ async function sendBookingRequestedRescheduleEmails({ booking, reason, rebookPat
   logEmailFailures(results);
 }
 
-module.exports = {
+export default {
   sendBookingCancelledEmails,
   sendBookingCreatedEmails,
   sendBookingRequestedRescheduleEmails,

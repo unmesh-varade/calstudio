@@ -1,21 +1,21 @@
-const bookingService = require('../services/booking.service');
+import bookingService from '../services/booking.service.js';
 
-async function listBookings(req, res) {
+export async function listBookings(req, res) {
   const data = await bookingService.listBookings(req.validated.query.view);
   res.json({ data });
 }
 
-async function cancelBooking(req, res) {
+export async function cancelBooking(req, res) {
   const data = await bookingService.cancelBooking(req.validated.params.id, req.validated.body?.reason);
   res.json({ data });
 }
 
-async function getBooking(req, res) {
+export async function getBooking(req, res) {
   const data = await bookingService.getBooking(req.validated.params.id);
   res.json({ data });
 }
 
-async function getBookingRescheduleSlots(req, res) {
+export async function getBookingRescheduleSlots(req, res) {
   const data = await bookingService.getBookingRescheduleSlots(
     req.validated.params.id,
     req.validated.query.date,
@@ -24,7 +24,7 @@ async function getBookingRescheduleSlots(req, res) {
   res.json({ data });
 }
 
-async function rescheduleBooking(req, res) {
+export async function rescheduleBooking(req, res) {
   const data = await bookingService.rescheduleBookingByAdmin(
     req.validated.params.id,
     req.validated.body,
@@ -32,7 +32,7 @@ async function rescheduleBooking(req, res) {
   res.json({ data });
 }
 
-async function requestRescheduleBooking(req, res) {
+export async function requestRescheduleBooking(req, res) {
   const data = await bookingService.requestRescheduleBooking(
     req.validated.params.id,
     req.validated.body,
@@ -40,7 +40,7 @@ async function requestRescheduleBooking(req, res) {
   res.json({ data });
 }
 
-module.exports = {
+export default {
   cancelBooking,
   getBooking,
   getBookingRescheduleSlots,

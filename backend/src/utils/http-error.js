@@ -1,4 +1,4 @@
-class HttpError extends Error {
+export class HttpError extends Error {
   constructor(statusCode, message, details) {
     super(message);
     this.name = 'HttpError';
@@ -7,11 +7,11 @@ class HttpError extends Error {
   }
 }
 
-function createHttpError(statusCode, message, details) {
+export function createHttpError(statusCode, message, details) {
   return new HttpError(statusCode, message, details);
 }
 
-module.exports = {
+export default {
   HttpError,
   createHttpError,
 };

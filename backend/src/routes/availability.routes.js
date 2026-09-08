@@ -1,12 +1,12 @@
-const express = require('express');
+import express from 'express';
 
-const controller = require('../controllers/availability.controller');
-const { validateRequest } = require('../middleware/validate-request');
-const { updateAvailabilitySchema } = require('../validations/availability.validation');
+import * as controller from '../controllers/availability.controller.js';
+import { validateRequest } from '../middleware/validate-request.js';
+import { updateAvailabilitySchema } from '../validations/availability.validation.js';
 
 const router = express.Router();
 
 router.get('/', controller.getAvailability);
 router.put('/', validateRequest({ body: updateAvailabilitySchema }), controller.updateAvailability);
 
-module.exports = router;
+export default router;

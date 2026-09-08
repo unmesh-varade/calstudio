@@ -1,10 +1,10 @@
-const express = require('express');
+import express from 'express';
 
-const { getHealth } = require('../controllers/health.controller');
-const availabilityRoutes = require('./availability.routes');
-const bookingRoutes = require('./booking.routes');
-const eventTypeRoutes = require('./event-type.routes');
-const publicRoutes = require('./public.routes');
+import { getHealth } from '../controllers/health.controller.js';
+import availabilityRoutes from './availability.routes.js';
+import bookingRoutes from './booking.routes.js';
+import eventTypeRoutes from './event-type.routes.js';
+import publicRoutes from './public.routes.js';
 
 const router = express.Router();
 
@@ -14,4 +14,4 @@ router.use('/availability', availabilityRoutes);
 router.use('/bookings', bookingRoutes);
 router.use('/public', publicRoutes);
 
-module.exports = router;
+export default router;

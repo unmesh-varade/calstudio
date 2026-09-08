@@ -1,4 +1,4 @@
-function validateRequest(schemas) {
+export function validateRequest(schemas) {
   return (req, res, next) => {
     try {
       const validated = {};
@@ -23,6 +23,6 @@ function validateRequest(schemas) {
   };
 }
 
-module.exports = {
+export default {
   validateRequest,
 };

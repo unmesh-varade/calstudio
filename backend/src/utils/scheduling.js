@@ -1,26 +1,26 @@
-const {
+import {
   addMinutes,
   minutesToTimeString,
   timeStringToMinutes,
   zonedLocalTimeToUtc,
-} = require('./time');
+} from './time.js';
 
-function rangesOverlap(startA, endA, startB, endB) {
+export function rangesOverlap(startA, endA, startB, endB) {
   return startA < endB && endA > startB;
 }
 
-function isSlotWithinWindow(startMinutes, durationMinutes, windowStartMinutes, windowEndMinutes) {
+export function isSlotWithinWindow(startMinutes, durationMinutes, windowStartMinutes, windowEndMinutes) {
   return (
     startMinutes >= windowStartMinutes &&
     startMinutes + durationMinutes <= windowEndMinutes
   );
 }
 
-function isSlotAligned(startMinutes, windowStartMinutes, intervalMinutes) {
+export function isSlotAligned(startMinutes, windowStartMinutes, intervalMinutes) {
   return (startMinutes - windowStartMinutes) % intervalMinutes === 0;
 }
 
-function generateAvailableSlots({
+export function generateAvailableSlots({
   dateString,
   timeZone,
   startTime,
@@ -65,7 +65,7 @@ function generateAvailableSlots({
   return slots;
 }
 
-module.exports = {
+export default {
   generateAvailableSlots,
   isSlotAligned,
   isSlotWithinWindow,

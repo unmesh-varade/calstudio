@@ -1,6 +1,6 @@
-const bookingService = require('../services/booking.service');
+import bookingService from '../services/booking.service.js';
 
-async function getPublicEventType(req, res) {
+export async function getPublicEventType(req, res) {
   const data = await bookingService.getPublicEventType(
     req.validated.params.username,
     req.validated.params.slug,
@@ -8,7 +8,7 @@ async function getPublicEventType(req, res) {
   res.json({ data });
 }
 
-async function getPublicSlots(req, res) {
+export async function getPublicSlots(req, res) {
   const data = await bookingService.getAvailableSlots(
     req.validated.params.username,
     req.validated.params.slug,
@@ -18,17 +18,17 @@ async function getPublicSlots(req, res) {
   res.json({ data });
 }
 
-async function getPublicProfile(req, res) {
+export async function getPublicProfile(req, res) {
   const data = await bookingService.getPublicProfile(req.validated.params.username);
   res.json({ data });
 }
 
-async function createPublicBooking(req, res) {
+export async function createPublicBooking(req, res) {
   const data = await bookingService.createPublicBooking(req.validated.body);
   res.status(201).json({ data });
 }
 
-async function getPublicBookingConfirmation(req, res) {
+export async function getPublicBookingConfirmation(req, res) {
   const data = await bookingService.getPublicBookingConfirmation(
     req.validated.params.bookingId,
     req.validated.query.email,
@@ -36,7 +36,7 @@ async function getPublicBookingConfirmation(req, res) {
   res.json({ data });
 }
 
-async function getPublicManageBooking(req, res) {
+export async function getPublicManageBooking(req, res) {
   const data = await bookingService.getPublicManageBooking(
     req.validated.params.bookingId,
     req.validated.query.token,
@@ -44,7 +44,7 @@ async function getPublicManageBooking(req, res) {
   res.json({ data });
 }
 
-async function getPublicRescheduleSlots(req, res) {
+export async function getPublicRescheduleSlots(req, res) {
   const data = await bookingService.getPublicRescheduleSlots(
     req.validated.params.bookingId,
     req.validated.query.token,
@@ -54,7 +54,7 @@ async function getPublicRescheduleSlots(req, res) {
   res.json({ data });
 }
 
-async function reschedulePublicBooking(req, res) {
+export async function reschedulePublicBooking(req, res) {
   const data = await bookingService.rescheduleBookingByGuest(
     req.validated.params.bookingId,
     req.validated.query.token,
@@ -63,7 +63,7 @@ async function reschedulePublicBooking(req, res) {
   res.json({ data });
 }
 
-async function cancelPublicBooking(req, res) {
+export async function cancelPublicBooking(req, res) {
   const data = await bookingService.cancelBookingByGuest(
     req.validated.params.bookingId,
     req.validated.query.token,
@@ -72,14 +72,14 @@ async function cancelPublicBooking(req, res) {
   res.json({ data });
 }
 
-module.exports = {
+export default {
   cancelPublicBooking,
   createPublicBooking,
   getPublicBookingConfirmation,
+  getPublicEventType,
   getPublicManageBooking,
   getPublicProfile,
   getPublicRescheduleSlots,
-  getPublicEventType,
   getPublicSlots,
   reschedulePublicBooking,
 };
